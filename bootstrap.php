@@ -114,7 +114,16 @@ $this->module('imageresize')->extend([
                 $asset['height']  = $info[1];
                 $asset['size']    = filesize($path);
                 $asset['resized'] = true;
-                
+
+            }
+
+        }
+
+        // add resized thumbnails
+        if (!empty($profiles)) {
+
+            foreach ($assets as &$asset) {
+
                 foreach ($profiles as $name => $options) {
 
                     if ($resized = $this->addResizedAsset($asset, $name, $options)) {
@@ -124,9 +133,7 @@ $this->module('imageresize')->extend([
                     }
 
                 }
-
             }
-
         }
 
         return $assets;
@@ -142,6 +149,8 @@ $this->module('imageresize')->extend([
             'quality' => 100,
         ], $options);
 
+        $rebuild = $options['rebuild'] ?? false;
+
         $anchor = $c['fp'] ?? $asset['fp'] ?? 'center';
         if (is_array($anchor)) $anchor = implode(' ', $anchor);
 
@@ -156,6 +165,9 @@ $this->module('imageresize')->extend([
         $pathOut = $this->app->path('#uploads:') . $dir . '/';
 
         $path = $pathOut . $fileName;
+
+        // skip, if file exists and rebuild isn't forced
+        if (\file_exists($path) && !$rebuild) return $asset;
 
         if (!is_dir($pathOut)) mkdir($pathOut);
 
