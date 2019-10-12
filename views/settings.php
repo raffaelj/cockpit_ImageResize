@@ -85,6 +85,16 @@
 
                   </div>
 
+                  <div class="uk-panel-box uk-panel-card uk-margin">
+
+                      @lang('Replace all existing images'):
+
+                      <a class="uk-button" onclick="{ replaceAssets }">@lang('Replace')</a>
+
+                      @lang('This may take a while').
+
+                  </div>
+
               </div>
 
               <cp-actionbar>
@@ -143,6 +153,24 @@
                 } else {
                     App.ui.notify("Saving failed.", "danger");
                 }
+
+            });
+
+        }
+
+        replaceAssets() {
+
+            App.ui.confirm("Are you sure?", function() {
+
+                App.request('/imageresize/replaceAssets').then(function(data) {
+
+                   if (data) {
+                        App.ui.notify("Replacing successful", "success");
+                    } else {
+                        App.ui.notify("Replacing failed.", "danger");
+                    }
+
+                });
 
             });
 

@@ -52,10 +52,23 @@ imageresize:
     enabled: true                 # boolean, default: false
     keepOriginal: true            # boolean, default: true
     moveOriginalTo: original      # string, default: "full"
-    maxWidth: 1024                # int, default: 1920
-    maxHeight: 1024               # int, default: 0
+    maxWidth: 2500                # int, default: 1920
+    maxHeight: 2500               # int, default: 0
     method: bestFit               # string, default: bestFit
     quality: 80                   # default: 100
+    replaceAssetsManager: true    # use modified assets manager
+    profiles:                     # create multiple image sizes
+        thumbnail:                # save in /uploads/thumbnail/image.jpg
+            width: 100
+            height: 100
+            method: thumbnail     # default: thumbnail
+            quality: 70           # default: 100
+        headerimage:
+            width: 1200
+            height: 400
+            method: thumbnail
+            quality: 70
+            folder: header        # save in /uploads/header/image.jpg
 ```
 
 ## ACL
@@ -71,11 +84,19 @@ groups:
             manage: true
 ```
 
+## CLI
+
+Call `./cp imageresize/replace` to replace all existing images.
+
 ## To do
 
-* [ ] batch action for existing files
-* [ ] cli commands
-* [ ] multiple profiles, e. g. "thumbnail", "banner"...
+* [x] batch action for existing files
+* cli commands
+  * [x] batch convert all assets
+  * [ ] update entries
+* [x] multiple profiles, e. g. "thumbnail", "banner"...
 * [ ] overwrite default date pattern in uploads folder to custom folder
+* [ ] force recreation when changing defaults
+* [ ] GUI for profiles
 
 [1]: https://github.com/agentejo/cockpit/
