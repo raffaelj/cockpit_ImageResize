@@ -88,6 +88,21 @@ groups:
 
 Call `./cp imageresize/replace` to replace all existing images.
 
+**Warning**
+
+* Create a backup before processing.
+* Make sure to set `memory_limit = 512M` in your `php.ini` if you have to process large files.
+* Use a sequential bash command if you still have memory issues
+
+If you run into memory problems, use the script sequential. First call the following command and read the output, e. g. "151".
+
+`./cp imageresize/replace --count`
+
+Then call the following command and replace "151" with your assets count.
+Now the script processes only 10 files at once.
+
+`for i in `seq 0 10 151`; do ./mp imageresize/replace --skip $i --limit 10 --s --loud; done`
+
 ## To do
 
 * [x] batch action for existing files

@@ -1,4 +1,18 @@
 <?php
+/**
+ * If you run into memory problems, use the script sequential.
+ * 
+ * First call the following command and read the output, e. g. "151".
+ * 
+ * ./cp imageresize/replace --count
+ * 
+ * Then call the following command and replace "151" with your assets count.
+ * Now the script processes only 10 files at once.
+ * 
+ * for i in `seq 0 10 151`; do ./mp imageresize/replace --skip $i --limit 10 --s --loud; done
+ * 
+ */
+
 
 if (!COCKPIT_CLI) return;
 
@@ -8,24 +22,55 @@ if (!$app->module('imageresize')->getConfig('enabled')) {
 
 $time = time();
 
-$chunks = (int) $app->param('chunks', 2);
+$limit = (int) $app->param('limit', false);
+$skip  = $app->param('skip', 0);
 
-CLI::writeln('Start to resize assets. This may take a while...');
+// bash argument string "0" turns to (bool) true...
+$skip = $skip === true ? 0 : (int) $skip;
 
-$assets = $app->storage->find('cockpit/assets')->toArray();
+$returnCount = $app->param('count', false);
+$quiet       = $app->param('quiet', false);
+$loud        = $app->param('loud', false);
+$sequence    = $app->param('s', false);
 
-$count = count($assets);
-$current = 0;
+$count = $app->storage->count('cockpit/assets');
 
-foreach (array_chunk($assets, $chunks) as $i => &$chunk) {
+if ($returnCount) {
+    return CLI::writeln($count);
+}
 
-    $chunk = $app->module('imageresize')->replaceAssets($chunk);
+if (!$sequence || ($sequence && $skip === 0)) {
+    CLI::writeln('Start to resize assets. This may take a while...');
+}
 
-    $app->module('cockpit')->updateAssets($chunk);
+$options = [];
+if ($skip)  $options['skip'] = $skip;
+if ($limit) $options['limit'] = $limit;
 
-    $current = $current + count($chunk);
-    CLI::writeln('Resized ' . $current . ' of ' . $count . ' assets');
+$assets = $app->storage->find('cockpit/assets', $options)->toArray();
+$total  = count($assets);
+
+foreach ($assets as $i => $asset) {
+
+    $current = $app->module('imageresize')->replaceAssets([$asset]);
+
+    if ($current) {
+        $app->module('cockpit')->updateAssets($current);
+    }
+
+    if (!$quiet) {
+        if ($loud) {
+
+            $memory = cockpit()('utils')->formatSize(\memory_get_usage(true));
+            $peak   = cockpit()('utils')->formatSize(\memory_get_peak_usage(true));
+
+            CLI::writeln('mem: ' . $memory . ' | peak: ' . $peak . ' | Processed ' . ($i+1+$skip) . ' of ' . $count . ' | id: ' . $current[0]['_id']);
+
+        } else {
+            CLI::writeln('Processed ' . ($i+1+$skip) . ' of ' . $count . ' assets');
+        }
+    }
 
 }
 
-CLI::writeln('Finished in ' . (time() - $time) . ' seconds', true);
+CLI::writeln('Processed '.$total.' assets in ' . (time() - $time) . ' seconds', true);

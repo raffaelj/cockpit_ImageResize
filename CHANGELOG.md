@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+* rewrote batch replace cli command to avoid memory issues
+* disabled ui batch action to avoid runtime or memory issues
+
 ## 0.1.1
 
 * added profiles for multiple image sizes, e. g. thumbnails
