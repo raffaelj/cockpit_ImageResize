@@ -144,7 +144,7 @@
                     <table class="uk-table uk-table-tabbed" if="{ listmode=='list' }">
                         <thead>
                             <tr>
-                                <td width="30"></td>
+                                <th width="30" class="uk-text-center"><input class="uk-checkbox" type="checkbox" data-check="all" onclick="{ selectAll }"></th>
                                 <th class="uk-text-small uk-noselect">{ App.i18n.get('Title') }</th>
                                 <th class="uk-text-small uk-noselect" width="20%">{ App.i18n.get('Type') }</th>
                                 <th class="uk-text-small uk-noselect" width="10%">{ App.i18n.get('Size') }</th>
@@ -497,6 +497,13 @@
             App.$(this.root).trigger('selectionchange', [this.selected]);
         }
 
+        selectAll(e) {
+
+            this.selected = this.selected != this.assets ? this.assets : [];
+
+            App.$(this.root).trigger('selectionchange', [this.selected]);
+        }
+
         getIconCls(path) {
 
             var name = path.toLowerCase();
@@ -657,7 +664,7 @@
                   </div>
 
                   <div class="uk-margin-large-top uk-text-center" if="{asset}">
-                      <span class="uk-h1" if="{asset.mime.match(/^image\//) == null }"><i class="uk-icon-{ getIconCls(asset.path) }"></i></span>
+                      <span class="uk-h1" if="{asset.mime.match(/^image\//) == null }"><i class="uk-icon-{ parent.getIconCls(asset.path) }"></i></span>
                       <div class="uk-display-inline-block uk-position-relative asset-fp-image" if="{asset.mime.match(/^image\//) }">
 
                           <cp-thumbnail src="{ASSETS_URL+asset.path}" width="800" if="{ !currentSize || currentSize == 'default' || !asset.sizes[currentSize] }"></cp-thumbnail>
@@ -766,7 +773,7 @@
     this.panels = [];
 
     // ImageResize addon
-    this.imageResize = this.parent ? true : false; // hide in entry modal
+    this.imageResize = false;
     this.currentSize = 'default';
     this.profiles = this.parent ? this.parent.profiles : {};
 
@@ -779,16 +786,20 @@
             this.panels.push({name:f, value:f});
         }
     }
-    
+
     this.on('mount', function() {
-      
+
       App.request('/assetsmanager/asset/'+opts.asset, {}).then(function(asset) {
-          
+
           $this.asset = asset;
+
+          // hide in entry modal or if not image
+          $this.imageResize = $this.parent && $this.asset.mime.match(/^image\//) ? true : false;
+
           $this.update();
-          
+
           if ($this.asset.mime.match(/^image\//)) {
-              
+
               setTimeout(function() {
 
                   $this.placeFocalPoint($this.asset.fp);
@@ -824,7 +835,7 @@
       }
 
     });
-    
+
     selectPanel(e) {
         this.panel = e.item ? e.item.p.name : null;
     }
