@@ -124,14 +124,18 @@ $this->module('imageresize')->extend([
 
             foreach ($assets as &$asset) {
 
-                foreach ($profiles as $name => $options) {
+                if (isset($asset['width']) && isset($asset['height'])) {
 
-                    if ($resized = $this->addResizedAsset($asset, $name, $options)) {
+                    foreach ($profiles as $name => $options) {
 
-                        $asset['sizes'][$name] = $resized;
+                        if ($resized = $this->addResizedAsset($asset, $name, $options)) {
+
+                            $asset['sizes'][$name] = $resized;
+
+                        }
 
                     }
-
+                    
                 }
             }
         }
@@ -141,7 +145,7 @@ $this->module('imageresize')->extend([
     },
 
     'addResizedAsset' => function($asset, $name, $options) {
-
+        
         $c = array_replace([
             'width'   => 1920,
             'height'  => 0,
@@ -167,7 +171,7 @@ $this->module('imageresize')->extend([
         $path = $pathOut . $fileName;
 
         // skip, if file exists and rebuild isn't forced
-        if (\file_exists($path) && !$rebuild) return $asset;
+        if (\file_exists($path) && !$rebuild) return false;
 
         if (!is_dir($pathOut)) mkdir($pathOut);
 
