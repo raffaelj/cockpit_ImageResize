@@ -55,7 +55,7 @@ class Admin extends \Cockpit\AuthController {
         return $this->app->module('imageresize')->addResizedAsset($asset, $name, $profiles[$name]);
 
     }
-
+/* 
     public function replaceAssets() {
 
         if (!$this->app->module('cockpit')->hasaccess('imageresize', 'manage')) {
@@ -73,5 +73,5 @@ class Admin extends \Cockpit\AuthController {
         return $this->app->module('cockpit')->updateAssets($assets);
 
     }
-
+*/
 }

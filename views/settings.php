@@ -84,7 +84,7 @@
                       </div>
 
                   </div>
-
+<!--
                   <div class="uk-panel-box uk-panel-card uk-margin">
 
                       @lang('Replace all existing images'):
@@ -94,7 +94,7 @@
                       @lang('This may take a while').
 
                   </div>
-
+-->
               </div>
 
               <cp-actionbar>
@@ -157,7 +157,7 @@
             });
 
         }
-
+/* 
         replaceAssets() {
 
             App.ui.confirm("Are you sure?", function() {
@@ -169,13 +169,10 @@
                     } else {
                         App.ui.notify("Replacing failed.", "danger");
                     }
-
                 });
-
             });
-
         }
-
+*/
     </script>
 
 </div>
