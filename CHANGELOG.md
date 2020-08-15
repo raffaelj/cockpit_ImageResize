@@ -4,6 +4,7 @@
 
 * rewrote batch replace cli command to avoid memory issues
 * disabled ui batch action to avoid runtime or memory issues
+* added `composer.json`
 
 ## 0.1.1
 
