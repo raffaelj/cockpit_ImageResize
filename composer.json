@@ -1,0 +1,23 @@
+{
+    "name": "raffaelj/cockpit-imageresize",
+    "type": "cockpit-module",
+    "description": "Resize uploaded images automatically in Cockpit CMS",
+    "keywords": ["cockpit", "image", "resize"],
+    "homepage": "https://github.com/raffaelj/cockpit_ImageResize",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Raffael Jesche",
+            "homepage": "https://www.rlj.me"
+        }
+    ],
+    "require": {
+        "composer/installers": "^1.9"
+    },
+    "config": {
+        "vendor-dir": "lib/vendor"
+    },
+    "extra": {
+        "installer-name": "ImageResize"
+    }
+}
