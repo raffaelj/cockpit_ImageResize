@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+
+* added option to use pretty file names - without uniqid, but with number suffix
+* added option for custom folder - still inside `uploads` folder
+* updated modified assets manager with latest core features
+* more effective use of event system --> requires Cockpit v0.10.2 or above
+* should be compatible with cloud storage addon (not tested, yet)
+
 ## 0.1.2
 
 * rewrote batch replace cli command to avoid memory issues

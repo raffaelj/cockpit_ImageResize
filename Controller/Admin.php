@@ -7,7 +7,7 @@ class Admin extends \Cockpit\AuthController {
     public function index() {}
 
     public function settings() {
-        
+
         if (!$this->app->module('cockpit')->hasaccess('imageresize', 'manage')) {
             return $this('admin')->denyRequest();
         }
@@ -49,29 +49,13 @@ class Admin extends \Cockpit\AuthController {
 
         if (!isset($profiles[$name])) return false;
 
+        $options = $profiles[$name];
+
         // force rebuilding thumbnail when calling from admin ui
-        $profiles[$name]['rebuild'] = true;
+        $options['rebuild'] = true;
 
-        return $this->app->module('imageresize')->addResizedAsset($asset, $name, $profiles[$name]);
-
-    }
-/* 
-    public function replaceAssets() {
-
-        if (!$this->app->module('cockpit')->hasaccess('imageresize', 'manage')) {
-            return $this('admin')->denyRequest();
-        }
-
-        if (!$this->app->module('imageresize')->getConfig('enabled')) {
-            return $this('admin')->denyRequest();
-        }
-
-        $assets = $this->app->storage->find('cockpit/assets')->toArray();
-
-        $assets = $this->app->module('imageresize')->replaceAssets($assets);
-
-        return $this->app->module('cockpit')->updateAssets($assets);
+        return $this->app->module('imageresize')->resizeAsset($asset, null, null, $name, $options);
 
     }
-*/
+
 }

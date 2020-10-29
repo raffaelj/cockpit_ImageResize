@@ -14,10 +14,16 @@
 
         <div class="uk-form" if="{ mode=='list' }">
 
-            <div class="uk-grid uk-grid-width-1-2">
+            <div class="uk-grid">
                 <div>
                     <div class="uk-grid uk-grid-small uk-flex-middle">
                         <div>
+                            <span class="uk-button-group uk-margin-right">
+                                <button class="uk-button uk-button-large {listmode=='list' && 'uk-button-primary'}" type="button" onclick="{ toggleListMode }" aria-label="{ App.i18n.get('Switch to list-mode') }"><i class="uk-icon-list"></i></button>
+                                <button class="uk-button uk-button-large {listmode=='grid' && 'uk-button-primary'}" type="button" onclick="{ toggleListMode }" aria-label="{ App.i18n.get('Switch to tile-mode') }"><i class="uk-icon-th"></i></button>
+                            </span>
+                        </div>
+                        <div show="{!opts.typefilter}">
                             <div class="uk-form-select">
 
                                 <span class="uk-button uk-button-large { getRefValue('filtertype') && 'uk-button-primary'} uk-text-capitalize"><i class="uk-icon-eye uk-margin-small-right"></i> { getRefValue('filtertype') || App.i18n.get('All') }</span>
@@ -42,7 +48,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="uk-text-right">
+                <div class="uk-flex-item-1"></div>
+                <div class="uk-flex uk-flex-middle">
 
                     <button class="uk-button uk-button-large uk-button-danger" type="button" onclick="{ removeSelected }" show="{ selected.length }">
                         { App.i18n.get('Delete') } <span class="uk-badge uk-badge-contrast uk-margin-small-left">{ selected.length }</span>
@@ -50,15 +57,31 @@
 
                     <button class="uk-button uk-button-large uk-button-link" onclick="{addFolder}">{ App.i18n.get('Add folder') }</button>
 
-                    <span class="uk-button-group uk-button-large">
-                        <button class="uk-button uk-button-large {listmode=='list' && 'uk-button-primary'}" type="button" onclick="{ toggleListMode }" aria-label="{ App.i18n.get('Switch to list-mode') }"><i class="uk-icon-list"></i></button>
-                        <button class="uk-button uk-button-large {listmode=='grid' && 'uk-button-primary'}" type="button" onclick="{ toggleListMode }" aria-label="{ App.i18n.get('Switch to tile-mode') }"><i class="uk-icon-th"></i></button>
-                    </span>
+                    <div data-uk-dropdown="mode:'click'">
 
-                    <span class="uk-button uk-button-large uk-button-primary uk-form-file">
-                        <input class="js-upload-select" aria-label="{ App.i18n.get('Select file') }" type="file" multiple="true">
-                        <i class="uk-icon-upload"></i>
-                    </span>
+                        <a class="uk-button uk-button-large uk-button-primary"><i class="uk-icon-upload"></i></a>
+
+                        <div class="uk-dropdown uk-margin-top uk-text-left">
+
+                            <ul class="uk-nav uk-nav-dropdown uk-dropdown-close">
+                                <li class="uk-nav-header uk-flex uk-flex-middle">
+                                    <span class="uk-flex-item-1">{ App.i18n.get('Upload') }</span>
+                                    <span class="uk-badge uk-badge-outline uk-text-warning"> max. { App.Utils.formatSize(App.$data.maxUploadSize) }</span>
+                                </li>
+                                <li>
+                                    <a class="uk-form-file">
+                                        <i class="uk-icon-file-o uk-icon-justify"></i> { App.i18n.get('File') }
+                                        <input class="js-upload-select" aria-label="{ App.i18n.get('Select file') }" type="file" multiple="true">
+                                    </a>
+                                    <a class="uk-form-file">
+                                        <i class="uk-icon-folder-o uk-icon-justify"></i> { App.i18n.get('Folder') }
+                                        <input class="js-upload-folder" type="file" title="" multiple multiple directory webkitdirectory allowdirs>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                    </div>
                 </div>
             </div>
 
@@ -121,7 +144,7 @@
                                     <div class="uk-position-absolute uk-position-cover uk-flex uk-flex-middle">
                                         <div class="uk-width-1-1 uk-text-center">
                                             <span if="{ asset.mime.match(/^image\//) == null }"><i class="uk-h1 uk-text-muted uk-icon-{ parent.getIconCls(asset.path) }"></i></span>
-                                            <cp-thumbnail src="{asset._id}" height="150" if="{ asset.mime.match(/^image\//) }" title="{ asset.width && [asset.width, asset.height].join('x')  }"></cp-thumbnail>
+                                            <cp-thumbnail src="{asset._id}" height="150" if="{ asset.mime.match(/^image\//) }" title="{ asset.width && [asset.width, asset.height].join('x') }"></cp-thumbnail>
                                         </div>
                                     </div>
                                 </div>
@@ -144,7 +167,9 @@
                     <table class="uk-table uk-table-tabbed" if="{ listmode=='list' }">
                         <thead>
                             <tr>
+                                <!-- custom -->
                                 <th width="30" class="uk-text-center"><input class="uk-checkbox" type="checkbox" data-check="all" onclick="{ selectAll }"></th>
+                                <!-- custom -->
                                 <th class="uk-text-small uk-noselect">{ App.i18n.get('Title') }</th>
                                 <th class="uk-text-small uk-noselect" width="20%">{ App.i18n.get('Type') }</th>
                                 <th class="uk-text-small uk-noselect" width="10%">{ App.i18n.get('Size') }</th>
@@ -272,15 +297,20 @@
         this.page     = 1;
         this.pages    = 1;
         this.limit    = opts.limit || 15;
-        
-        // this.profiles = [];
 
         this.on('mount', function() {
+
+            if (opts.typefilter) {
+                this.refs.filtertype.value = opts.typefilter;
+            }
 
             this.listAssets(1);
 
             // handle uploads
-            App.assets.require(['/assets/lib/uikit/js/components/upload.js'], function() {
+            App.assets.require([
+                '/assets/lib/uikit/js/components/upload.js',
+                '/assets/lib/uppie.js'
+            ], function() {
 
                 var uploadSettings = {
 
@@ -332,14 +362,61 @@
                 uploadselect = UIkit.uploadSelect(App.$('.js-upload-select', $this.root)[0], uploadSettings),
                 uploaddrop   = UIkit.uploadDrop($this.refs.list, uploadSettings);
 
+                // upload folder
+                
+                var uppie = new Uppie();
+
+                uppie($this.root.querySelector('.js-upload-folder'), async (e, formData, files) => {
+                    
+                    if (!files) return;
+
+                    files.forEach(function(path) {
+                        formData.append("paths[]", path);
+                    });
+
+                    formData.append("folder", $this.folder);
+
+                    var xhr = new XMLHttpRequest();
+
+                    xhr.open('POST', App.route('/assetsmanager/uploadfolder'), true);
+
+                    xhr.setRequestHeader('Accept', 'application/json');
+
+                    xhr.upload.addEventListener('progress', function(e){
+                        uploadSettings.progress((e.loaded / e.total)*100, e);
+                    }, false);
+
+                    xhr.addEventListener('loadstart', function(e){ uploadSettings.loadstart(e); }, false);
+                    
+                    xhr.onreadystatechange = function() {
+
+                        if (xhr.readyState==4){
+
+                            var response = xhr.responseText;
+
+                            try {
+                                response = App.$.parseJSON(response);
+                            } catch(e) {
+                                response = false;
+                            }
+
+                            uploadSettings.allcomplete(response, xhr);
+                        }
+                    };
+                    
+                    xhr.send(formData);
+                });
+
                 UIkit.init(this.root);
             });
 
+            // custom
             // load ImageResize profiles
             App.request('/imageresize/getProfiles').then(function(data) {
                 $this.profiles = data;
                 $this.update();
             });
+            // custom
 
         });
 
@@ -352,6 +429,24 @@
 
             this.page    = page || 1;
             this.loading = true;
+
+            this.filter = null;
+
+            if (this.refs.filtertitle.value || this.refs.filtertype.value) {
+                this.filter = {};
+            }
+
+            if (this.refs.filtertitle.value) {
+
+                this.filter.$or = [];
+                this.filter.$or.push({title: {'$regex':this.refs.filtertitle.value, '$options': 'i'}});
+                this.filter.$or.push({description: {'$regex':this.refs.filtertitle.value, '$options': 'i'}});
+                this.filter.$or.push({tags: this.refs.filtertitle.value});
+            }
+
+            if (this.refs.filtertype.value) {
+                this.filter[this.refs.filtertype.value] = true;
+            }
 
             var options = {
                 filter : this.filter || null,
@@ -386,23 +481,6 @@
         }
 
         updateFilter() {
-
-            this.filter = null;
-
-            if (this.refs.filtertitle.value || this.refs.filtertype.value) {
-                this.filter = {};
-            }
-
-            if (this.refs.filtertitle.value) {
-
-                this.filter.$or = [];
-                this.filter.$or.push({title: {'$regex':this.refs.filtertitle.value, '$options': 'i'}});
-                this.filter.$or.push({tags: this.refs.filtertitle.value});
-            }
-
-            if (this.refs.filtertype.value) {
-                this.filter[this.refs.filtertype.value] = true;
-            }
 
             this.listAssets(1);
         }
@@ -497,12 +575,14 @@
             App.$(this.root).trigger('selectionchange', [this.selected]);
         }
 
+        // custom
         selectAll(e) {
 
             this.selected = this.selected != this.assets ? this.assets : [];
 
             App.$(this.root).trigger('selectionchange', [this.selected]);
         }
+        // custom
 
         getIconCls(path) {
 
@@ -664,24 +744,32 @@
                   </div>
 
                   <div class="uk-margin-large-top uk-text-center" if="{asset}">
-                      <span class="uk-h1" if="{asset.mime.match(/^image\//) == null }"><i class="uk-icon-{ parent.getIconCls(asset.path) }"></i></span>
+                      <span class="uk-h1" if="{asset.mime.match(/^image\//) == null }"><i class="uk-icon-{ getIconCls(asset.path) }"></i></span>
                       <div class="uk-display-inline-block uk-position-relative asset-fp-image" if="{asset.mime.match(/^image\//) }">
+                          <!--<cp-thumbnail src="{ASSETS_URL+asset.path}" width="800"></cp-thumbnail
+                          <div class="cp-assets-fp" title="Focal Point" data-uk-tooltip></div>>-->
 
+                          <!-- custom -->
                           <cp-thumbnail src="{ASSETS_URL+asset.path}" width="800" if="{ !currentSize || currentSize == 'default' || !asset.sizes[currentSize] }"></cp-thumbnail>
 
                           <cp-thumbnail if="{ currentSize && currentSize != 'default' && asset.sizes[currentSize] }" src="{ ASSETS_URL+asset.sizes[currentSize].path }" width="{ asset.sizes[currentSize].width }" height="{ asset.sizes[currentSize].height }"></cp-thumbnail>
-
                           <div class="cp-assets-fp" title="Focal Point" data-uk-tooltip show="{ !currentSize || currentSize == 'default' || !asset.sizes[currentSize] }"></div>
+                          <!-- custom -->
+
                       </div>
                       <div class="uk-margin-top uk-text-truncate uk-text-small uk-text-muted">
                           <a href="{ASSETS_URL+asset.path}" target="_blank"  title="{ App.i18n.get('Direct link to asset') }" data-uk-tooltip><i class="uk-icon-button uk-icon-button-outline uk-text-primary uk-icon-link"></i></a>
-                          <a if="{ imageResize && asset.sizes }" each="{ options, name in asset.sizes }" href="{ASSETS_URL+options.path}" target="_blank" title="{ App.i18n.get('Direct link to asset')+' ('+name+')' }" data-uk-tooltip><i class="uk-icon-button uk-icon-button-outline uk-text-primary uk-icon-link uk-margin-small-left"></i></a>
+
+                          <!-- custom -->
+                          <a if="{ imageResize && asset.sizes }" each="{ options, name in asset.sizes }" href="{ASSETS_URL+options.path}" target="_blank" title="{ App.i18n.get('Direct link to asset')+' ('+name+')' }" data-uk-tooltip><i class="uk-icon-button uk-text-primary uk-icon-link uk-margin-small-left"></i></a>
+                          <!-- custom -->
                       </div>
                   </div>
               </div>
           </div>
           <div class="uk-width-medium-1-3">
 
+              <!-- custom -->
               <div class="uk-margin uk-panel-box uk-panel-card">
                   <label class="uk-text-small uk-text-bold">{ App.i18n.get('Copyright') }</label>
                   <input class="uk-width-1-1" type="text" bind="asset.copyright">
@@ -715,6 +803,7 @@
                   </div>
 
               </div>
+              <!-- custom -->
 
               <div class="uk-margin">
                   <label class="uk-text-small uk-text-bold">{ App.i18n.get('Id') }</label>
@@ -759,23 +848,24 @@
       </div>
 
       <div data-is="{'assetspanel-'+p.name}" asset="{asset}" each="{p in panels}" show="{panel == p.name}"></div>
-      <cp-inspectobject ref="inspectasset" if="{!modal && imageResize}"></cp-inspectobject>
 
   </div>
-
+  
   <script>
     
     this.mixin(RiotBindMixin);
     
     var $this = this, $root = App.$(this.root);
-
+    
     this.panel  = null;
     this.panels = [];
 
+    // custom
     // ImageResize addon
     this.imageResize = false;
     this.currentSize = 'default';
     this.profiles = this.parent ? this.parent.profiles : {};
+    // custom
 
     for (var tag in riot.tags) {
 
@@ -786,22 +876,24 @@
             this.panels.push({name:f, value:f});
         }
     }
-
+    
     this.on('mount', function() {
-
+      
       App.request('/assetsmanager/asset/'+opts.asset, {}).then(function(asset) {
-
+          
           $this.asset = asset;
 
+          // custom
           // hide in entry modal or if not image
           $this.imageResize = $this.parent && $this.asset.mime.match(/^image\//) ? true : false;
+          // custom
 
           $this.update();
-
+          
           if ($this.asset.mime.match(/^image\//)) {
-
+              
               setTimeout(function() {
-
+                  
                   $this.placeFocalPoint($this.asset.fp);
                   
                   $root.on('click', '.asset-fp-image canvas', function(e) {
@@ -812,9 +904,6 @@
 
                       $this.asset.fp = {x: px, y: py};
                       $this.placeFocalPoint($this.asset.fp);
-
-                      $this.update();
-
                   });
                   
               }, 500)
@@ -824,18 +913,8 @@
           App.ui.notify(res && (res.message || res.error) ? (res.message || res.error) : 'Loading failed.', 'danger');
       });
       
-      if (this.imageResize) {
-          // inspect raw object
-          Mousetrap.bindGlobal(['ctrl+alt+i'], function(e) {
-
-              $this.refs.inspectasset.show($this.asset);
-              $this.update();
-              return false;
-          });
-      }
-
     });
-
+    
     selectPanel(e) {
         this.panel = e.item ? e.item.p.name : null;
     }
@@ -877,6 +956,7 @@
         });
     }
 
+    // custom
     generateSize(e) {
 
         if (e) e.preventDefault();
@@ -900,6 +980,7 @@
         });
 
     }
+    // custom
 
   </script>
 

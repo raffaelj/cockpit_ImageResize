@@ -2,6 +2,10 @@
 
 Addon for [Cockpit CMS][1] to resize uploaded images automatically
 
+## Requirements
+
+Since v0.2.0, ImageResize requires Cockpit v0.10.1 or above.
+
 ## Installation
 
 Copy this repository into `/addons` and name it `ImageResize` or
@@ -94,7 +98,7 @@ Call `./cp imageresize/replace` to replace all existing images.
 * Make sure to set `memory_limit = 512M` in your `php.ini` if you have to process large files.
 * Use a sequential bash command if you still have memory issues
 
-If you run into memory problems, use the script sequential. First call the following command and read the output, e. g. "151".
+If you run into memory problems, use the script sequentially. First call the following command and read the output, e. g. "151".
 
 `./cp imageresize/replace --count`
 
@@ -103,6 +107,14 @@ Now the script processes only 10 files at once.
 
 `for i in `seq 0 10 151`; do ./mp imageresize/replace --skip $i --limit 10 --s --loud; done`
 
+## Customized assetsmanager/cp-assets component
+
+**extra features:**
+
+* "select all" checkbox
+* `copyright` field for assets
+* select different sizes (profiles) in assetsmanager
+
 ## To do
 
 * [x] batch action for existing files
@@ -110,7 +122,7 @@ Now the script processes only 10 files at once.
   * [x] batch convert all assets
   * [ ] update entries
 * [x] multiple profiles, e. g. "thumbnail", "banner"...
-* [ ] overwrite default date pattern in uploads folder to custom folder
+* [x] overwrite default date pattern in uploads folder to custom folder
 * [ ] force recreation when changing defaults
 * [ ] GUI for profiles
 

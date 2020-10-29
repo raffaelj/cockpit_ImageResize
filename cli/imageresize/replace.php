@@ -1,6 +1,6 @@
 <?php
 /**
- * If you run into memory problems, use the script sequential.
+ * If you run into memory problems, use the script sequentially.
  * 
  * First call the following command and read the output, e. g. "151".
  * 
@@ -9,7 +9,7 @@
  * Then call the following command and replace "151" with your assets count.
  * Now the script processes only 10 files at once.
  * 
- * for i in `seq 0 10 151`; do ./mp imageresize/replace --skip $i --limit 10 --s --loud; done
+ * for i in `seq 0 10 151`; do ./mp imageresize/replace --skip $i --limit 10 --s --v; done
  * 
  */
 
@@ -30,8 +30,8 @@ $skip = $skip === true ? 0 : (int) $skip;
 
 $returnCount = $app->param('count', false);
 $quiet       = $app->param('quiet', false);
-$loud        = $app->param('loud', false);
-$sequence    = $app->param('s', false);
+$verbose     = $app->param('v',     false);
+$sequence    = $app->param('s',     false);
 
 $count = $app->storage->count('cockpit/assets');
 
@@ -52,17 +52,17 @@ $total  = count($assets);
 
 foreach ($assets as $i => $asset) {
 
-    $current = $app->module('imageresize')->replaceAssets([$asset]);
+    $current = $app->module('imageresize')->replaceAsset($asset);
 
     if ($current) {
         $app->module('cockpit')->updateAssets($current);
     }
 
     if (!$quiet) {
-        if ($loud) {
+        if ($verbose) {
 
-            $memory = cockpit()('utils')->formatSize(\memory_get_usage(true));
-            $peak   = cockpit()('utils')->formatSize(\memory_get_peak_usage(true));
+            $memory = $app->helper('utils')->formatSize(\memory_get_usage(true));
+            $peak   = $app->helper('utils')->formatSize(\memory_get_peak_usage(true));
 
             CLI::writeln('mem: ' . $memory . ' | peak: ' . $peak . ' | Processed ' . ($i+1+$skip) . ' of ' . $count . ' | id: ' . $current[0]['_id']);
 

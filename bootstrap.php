@@ -5,7 +5,7 @@
  * @see       https://github.com/raffaelj/cockpit_ImageResize
  * @see       https://github.com/agentejo/cockpit/
  * 
- * @version   0.1.2
+ * @version   0.2.0
  * @author    Raffael Jesche
  * @license   MIT
  */
@@ -28,10 +28,10 @@ $this->module('imageresize')->extend([
                     'method'       => 'bestFit',
                     'quality'      => 100,
                     'profiles'     => [],         # add multiple sizes like thumbnail
+                    'prettyNames'  => false,      # remove uniqid from file names, to do...
+                    'customFolder' => null,       # overwrite original date pattern, to do...
                     'replaceAssetsManager' => false, # modified assets manager
-                    // 'prettyNames'  => false,   # remove uniqid from file names, to do...
                     // 'renameToTitle' => false,  # rename image to title (for SEO), to do... (must be unique)
-                    // 'customFolder' => '',      # overwrite original date pattern, to do...
                 ],
                 $this->app->storage->getKey('cockpit/options', 'imageresize', []),
                 $this->app->retrieve('imageresize', [])
@@ -47,105 +47,155 @@ $this->module('imageresize')->extend([
 
     },
 
-    'replaceAssets' => function($assets = []) {
+    'changePath' => function($asset, $file, $path) {
 
-        $c = $this->getConfig();
+        $path_parts = \pathinfo($file);
+        $name = $path_parts['filename'];
+        $ext  = $path_parts['extension'];
 
-        if ($c['keepOriginal']) {
-            $pathOutOriginal = $this->app->path('#uploads:') . $c['moveOriginalTo'] . '/';
-            if (!is_dir($pathOutOriginal)) mkdir($pathOutOriginal);
+        $dir = '/'.date('Y/m/d').'/';
+
+        if (\is_string($this->config['customFolder'])) {
+            $dir = '/'.\trim($this->config['customFolder'], '/').'/';
+            if ($dir == '//') $dir = '/';
         }
 
-        $profiles = !empty($c['profiles']) ? $c['profiles'] : [];
+        $clean = \preg_replace('/[^a-zA-Z0-9-_\.]/','', \str_replace(' ', '-', $name));
+        $path  = "{$dir}{$clean}.{$ext}";
 
-        foreach ($assets as &$asset) {
-
-            // skip, if already resized
-            if (isset($asset['resized']) && $asset['resized'] == true) {
-                continue;
-            }
-
-            if (isset($asset['width']) && isset($asset['height'])) {
-
-                // use orginal size if 0
-                $maxWidth  = $c['maxWidth']  ? $c['maxWidth']  : $asset['width'];
-                $maxHeight = $c['maxHeight'] ? $c['maxHeight'] : $asset['height'];
-
-                if (!($asset['width'] > $maxWidth || $asset['height'] > $maxHeight)) {
-                    continue;
-                }
-
-                $path = $this->app->path('#uploads:' . ltrim($asset['path'], '/'));
-
-                if ($c['keepOriginal']) {
-
-                    $fileName = basename($asset['path']);
-                    $copied = copy($path, $pathOutOriginal.$fileName);
-
-                    // skip resizing if original wasn't copied
-                    if ($copied === false) continue;
-
-                    // For some reason, filesize() points to the copied path now...
-                    // (Win, Xampp7) - I don't understand it, but it's easy to fix
-                    $path = realpath($path);
-
-                    $asset['sizes']['full'] = [
-                        'path' => '/' . $c['moveOriginalTo'] . '/' . $fileName,
-                        'width' => $asset['width'],
-                        'height' => $asset['height'],
-                        'size' => $asset['size'],
-                    ];
-
-                }
-
-                // resize image
-                $img = $this('image')->take($path)->{$c['method']}($maxWidth, $maxHeight);
-
-                // overwrite input file with resized output
-                $result = file_put_contents($path, $img->toString(null, $c['quality']));
-
-                unset($img);
-
-                // don't overwrite meta, if write process failed
-                if ($result === false) continue;
-
-                $info = getimagesize($path);
-                $asset['width']   = $info[0];
-                $asset['height']  = $info[1];
-                $asset['size']    = filesize($path);
-                $asset['resized'] = true;
-
-            }
-
+        // check for duplicates and increase number suffix
+        $num = 0;
+        while ($this->app->filestorage->has("assets://{$path}")) {
+            $num++;
+            $path = "{$dir}{$clean}-{$num}.{$ext}";
         }
 
-        // add resized thumbnails
-        if (!empty($profiles)) {
+        $asset['title'] = $asset['title'] . (($num) ? " ({$num})" : '');
+        $asset['path']  = $path;
 
-            foreach ($assets as &$asset) {
-
-                if (isset($asset['width']) && isset($asset['height'])) {
-
-                    foreach ($profiles as $name => $options) {
-
-                        if ($resized = $this->addResizedAsset($asset, $name, $options)) {
-
-                            $asset['sizes'][$name] = $resized;
-
-                        }
-
-                    }
-                    
-                }
-            }
-        }
-
-        return $assets;
+        return $asset;
 
     },
 
-    'addResizedAsset' => function($asset, $name, $options) {
-        
+    'replaceAsset' => function($asset, $opts = null, $file = null) {
+
+        if (!$opts) $opts  = ['mimetype' => $asset['mime']];
+
+        if (!$file) {
+
+            $src = $this->app->path("#uploads:{$asset['path']}");
+
+            if (!$src && $this->app->filestorage->has('assets://'.$asset['path'])) {
+
+                $stream = $this->app->filestorage->readStream('assets://'.$asset['path']);
+
+                if ($stream) {
+                   $this->app->filestorage->writeStream('uploads://'.$asset['path'], $stream);
+                   $src = $this->app->path("#uploads:{$asset['path']}");
+                }
+                else {
+                    return false;
+                }
+            }
+
+            $file = $src;
+        }
+
+        $c = $this->getConfig();
+
+        // skip, if already resized (cli)
+        if (isset($asset['resized']) && $asset['resized'] == true) {
+            return;
+        }
+
+        // use orginal size if 0
+        $maxWidth  = $c['maxWidth']  ? $c['maxWidth']  : $asset['width'];
+        $maxHeight = $c['maxHeight'] ? $c['maxHeight'] : $asset['height'];
+
+        if (!($asset['width'] > $maxWidth || $asset['height'] > $maxHeight)) {
+//             return;
+        }
+
+        // copy original file to full dir
+        if ($c['keepOriginal']) {
+
+            $destination = '/'.\trim($c['moveOriginalTo'], '/').'/'.\basename($asset['path']);
+
+            // move file
+            $stream = \fopen($file, 'r+');
+            $this->app->filestorage->writeStream("assets://{$destination}", $stream, $opts);
+
+            if (\is_resource($stream)) {
+                \fclose($stream);
+            }
+
+            $asset['sizes']['full'] = [
+                'path'   => $destination,
+                'width'  => $asset['width'],
+                'height' => $asset['height'],
+                'size'   => $asset['size'],
+            ];
+
+        }
+
+        // resize image
+        $img = $this->app->helper('image')
+                ->take($file)
+                ->{$c['method']}($maxWidth, $maxHeight)
+                ->toString(null, $c['quality']);
+
+        // overwrite image
+        if ($this->app->helper('fs')->write($file, $img)) {
+
+            // update meta
+            $info = \getimagesize($file);
+            $asset['width']   = $info[0];
+            $asset['height']  = $info[1];
+            $asset['size']    = \filesize($file);
+            $asset['resized'] = true;
+        }
+
+        unset($img);
+
+        // create extra images from profiles
+        foreach ($c['profiles'] as $name => $options) {
+
+            if ($resized = $this->resizeAsset($asset, $file, $opts, $name, $options)) {
+
+                $asset['sizes'][$name] = $resized;
+
+            }
+
+        }
+
+        return $asset;
+
+    },
+
+    'resizeAsset' => function($asset, $file = null, $opts = null, $name, $options) {
+
+        if (!$opts) $opts  = ['mimetype' => $asset['mime']];
+
+        if (!$file) {
+
+            $src = $this->app->path("#uploads:{$asset['path']}");
+
+            if (!$src && $this->app->filestorage->has('assets://'.$asset['path'])) {
+
+                $stream = $this->app->filestorage->readStream('assets://'.$asset['path']);
+
+                if ($stream) {
+                   $this->app->filestorage->writeStream('uploads://'.$asset['path'], $stream);
+                   $src = $this->app->path("#uploads:{$asset['path']}");
+                }
+                else {
+                    return false;
+                }
+            }
+
+            $file = $src;
+        }
+
         $c = array_replace([
             'width'   => 1920,
             'height'  => 0,
@@ -156,61 +206,96 @@ $this->module('imageresize')->extend([
         $rebuild = $options['rebuild'] ?? false;
 
         $anchor = $c['fp'] ?? $asset['fp'] ?? 'center';
-        if (is_array($anchor)) $anchor = implode(' ', $anchor);
+        if (\is_array($anchor)) $anchor = \implode(' ', $anchor);
 
         // use orginal size if 0
         $width  = $c['width']  ? $c['width']  : $asset['width'];
         $height = $c['height'] ? $c['height'] : $asset['height'];
 
         $dir = !empty($c['folder']) ? $c['folder'] : $name;
-        $fileName = basename($asset['path']);
+        $dir = '/'.\trim($dir, '/').'/';
+        $file_name = basename($asset['path']);
 
-        $pathIn  = $this->app->path('#uploads:' . ltrim($asset['path'], '/'));
-        $pathOut = $this->app->path('#uploads:') . $dir . '/';
+        $destination = "{$dir}{$file_name}";
 
-        $path = $pathOut . $fileName;
+        if (!$rebuild && $this->app->filestorage->has("assets://{$destination}")) {
+            return false;
+        }
 
-        // skip, if file exists and rebuild isn't forced
-        if (\file_exists($path) && !$rebuild) return false;
-
-        if (!is_dir($pathOut)) mkdir($pathOut);
+        if ($this->app->filestorage->has("assets://{$destination}")) {
+            $this->app->filestorage->delete("assets://{$destination}");
+        }
 
         // resize image
         if ($c['method'] == 'thumbnail') {
-            $img = $this('image')->take($pathIn)->{$c['method']}($width, $height, $anchor);
+            $img_opts = [$width, $height, $anchor];
         } else {
-            $img = $this('image')->take($pathIn)->{$c['method']}($width, $height);
+            $img_opts = [$width, $height];
         }
 
-        // save resized image
-        $result = file_put_contents($path, $img->toString(null, $c['quality']));
+        $img = $this->app->helper('image')
+                ->take($file)
+                ->{$c['method']}(...$img_opts)
+                ->toString(null, $c['quality']);
+
+        // write img to tmp file
+        $tmp = $this->app->path('#tmp:').uniqid()."_{$name}_{$file_name}";
+        $this->app->helper('fs')->write($tmp, $img);
 
         unset($img);
 
-        $info = getimagesize($path);
+        // move file
+        $stream = \fopen($tmp, 'r+');
+        $this->app->filestorage->writeStream("assets://{$destination}", $stream, $opts);
 
-        return [
-            'path' => '/' . $dir . '/' . $fileName,
-            'width' => $info[0],
+        if (\is_resource($stream)) {
+            \fclose($stream);
+        }
+
+        $info = \getimagesize($tmp);
+
+        $return = [
+            'path'   => $destination,
+            'width'  => $info[0],
             'height' => $info[1],
-            'size' => filesize($path),
+            'size'   => \filesize($tmp),
         ];
 
-    }
+        \unlink($tmp);
+
+        return $return;
+
+    },
 
 ]);
 
-$this->on('cockpit.assets.save', function(&$assets) {
+$this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$path) {
 
     $c = $this->module('imageresize')->getConfig();
 
+    // change only custom directory
+    if (\is_string($c['customFolder']) && !$c['prettyNames']) {
+        $dir = '/'.\trim($c['customFolder'], '/').'/';
+        if ($dir == '//') $dir = '/';
+        $path = \str_replace('/'.\date('Y/m/d').'/', $dir, $path);
+        $asset['path'] = $path;
+    }
+
+    // prettify file names and change custom dir
+    if ($c['prettyNames']) {
+        $asset = $this->module('imageresize')->changePath($asset, $file, $path);
+        $path  = $asset['path'];
+    }
+
+    // replace uploaded file with resized file
     if ($c['enabled'] !== true) return;
 
-    $assets = $this->module('imageresize')->replaceAssets($assets);
+    $asset = $this->module('imageresize')->replaceAsset($asset, $opts, $file);
+
 
 });
 
-// remove original image copy
+// remove original image copy and custom sizes (profiles)
 $this->on('cockpit.assets.remove', function($assets) {
 
     $c = $this->module('imageresize')->getConfig();
@@ -218,10 +303,10 @@ $this->on('cockpit.assets.remove', function($assets) {
     if ($c['enabled'] !== true) return;
 
     foreach($assets as $asset) {
-        if (isset($asset['sizes']) && is_array($asset['sizes'])) {
+        if (isset($asset['sizes']) && \is_array($asset['sizes'])) {
             foreach ($asset['sizes'] as $file) {
-                if ($this->filestorage->has('assets://'.trim($file['path'], '/'))) {
-                    $this->filestorage->delete('assets://'.trim($file['path'], '/'));
+                if ($this->filestorage->has('assets://'.\trim($file['path'], '/'))) {
+                    $this->filestorage->delete('assets://'.\trim($file['path'], '/'));
                 }
             }
         }
