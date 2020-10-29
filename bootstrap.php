@@ -10,6 +10,8 @@
  * @license   MIT
  */
 
+require_once(__DIR__.'/lib/vendor/autoload.php');
+
 $this->module('imageresize')->extend([
 
     'config' => null,
@@ -28,8 +30,9 @@ $this->module('imageresize')->extend([
                     'method'       => 'bestFit',
                     'quality'      => 100,
                     'profiles'     => [],         # add multiple sizes like thumbnail
-                    'prettyNames'  => false,      # remove uniqid from file names, to do...
-                    'customFolder' => null,       # overwrite original date pattern, to do...
+                    'prettyNames'  => false,      # remove uniqid from file names
+                    'customFolder' => null,       # overwrite original date pattern
+                    'optimize'     => false,      # Use Spatie optimizer
                     'replaceAssetsManager' => false, # modified assets manager
                     // 'renameToTitle' => false,  # rename image to title (for SEO), to do... (must be unique)
                 ],
@@ -160,6 +163,12 @@ $this->module('imageresize')->extend([
 
         unset($img);
 
+        if ($c['optimize']) {
+            \Spatie\ImageOptimizer\OptimizerChainFactory::create()->optimize($file);
+            $asset['size'] = \filesize($file);
+            $asset['optimized'] = true;
+        }
+
         // create extra images from profiles
         foreach ($c['profiles'] as $name => $options) {
 
@@ -250,6 +259,10 @@ $this->module('imageresize')->extend([
 
         unset($img);
 
+        if ($c['optimize']) {
+            \Spatie\ImageOptimizer\OptimizerChainFactory::create()->optimize($tmp);
+        }
+
         // move file
         $stream = \fopen($tmp, 'r+');
         $this->app->filestorage->writeStream("assets://{$destination}", $stream, $opts);
@@ -266,6 +279,10 @@ $this->module('imageresize')->extend([
             'height' => $info[1],
             'size'   => \filesize($tmp),
         ];
+
+        if ($c['optimize']) {
+            $return['optimized'] = true;
+        }
 
         \unlink($tmp);
 

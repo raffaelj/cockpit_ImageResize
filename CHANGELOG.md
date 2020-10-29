@@ -4,6 +4,7 @@
 
 * added option to use pretty file names - without uniqid, but with number suffix
 * added option for custom folder - still inside `uploads` folder
+* added image optimizer (Spatie)
 * updated modified assets manager with latest core features
 * more effective use of event system --> requires Cockpit v0.10.2 or above
 * should be compatible with cloud storage addon (not tested, yet)
