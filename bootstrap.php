@@ -138,21 +138,24 @@ $this->module('imageresize')->extend([
 
         }
 
-        // resize image
-        $img = $this->app->helper('image')
-                ->take($file)
-                ->{$c['method']}($maxWidth, $maxHeight)
-                ->toString(null, $c['quality']);
+        // resize only images, not svg
+        if ($asset['image'] && (isset($asset['width']) && isset($asset['height']))) {
+            // resize image
+            $img = $this->app->helper('image')
+                    ->take($file)
+                    ->{$c['method']}($maxWidth, $maxHeight)
+                    ->toString(null, $c['quality']);
 
-        // overwrite image
-        if ($this->app->helper('fs')->write($file, $img)) {
+            // overwrite image
+            if ($this->app->helper('fs')->write($file, $img)) {
 
-            // update meta
-            $info = \getimagesize($file);
-            $asset['width']   = $info[0];
-            $asset['height']  = $info[1];
-            $asset['size']    = \filesize($file);
-            $asset['resized'] = true;
+                // update meta
+                $info = \getimagesize($file);
+                $asset['width']   = $info[0];
+                $asset['height']  = $info[1];
+                $asset['size']    = \filesize($file);
+                $asset['resized'] = true;
+            }
         }
 
         unset($img);
@@ -173,6 +176,9 @@ $this->module('imageresize')->extend([
     },
 
     'resizeAsset' => function($asset, $file = null, $opts = null, $name, $options) {
+
+        // skip if not image (or svg)
+        if (!$asset['image'] || !(isset($asset['width']) && isset($asset['height']))) return;
 
         if (!$opts) $opts  = ['mimetype' => $asset['mime']];
 
