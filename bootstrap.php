@@ -50,7 +50,7 @@ $this->module('imageresize')->extend([
 
     },
 
-    'changePath' => function($asset, $file, $path) {
+    'changePath' => function($asset, $file) {
 
         $path_parts = \pathinfo($file);
         $name = $path_parts['filename'];
@@ -164,7 +164,7 @@ $this->module('imageresize')->extend([
         unset($img);
 
         if ($c['optimize']) {
-            \Spatie\ImageOptimizer\OptimizerChainFactory::create()->optimize($file);
+            $this->optimize($file);
             $asset['size'] = \filesize($file);
             $asset['optimized'] = true;
         }
@@ -260,7 +260,7 @@ $this->module('imageresize')->extend([
         unset($img);
 
         if ($c['optimize']) {
-            \Spatie\ImageOptimizer\OptimizerChainFactory::create()->optimize($tmp);
+            $this->optimize($tmp);
         }
 
         // move file
@@ -290,6 +290,12 @@ $this->module('imageresize')->extend([
 
     },
 
+    'optimize' => function($file) {
+
+        \Spatie\ImageOptimizer\OptimizerChainFactory::create()->optimize($file);
+
+    },
+
 ]);
 
 $this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$path) {
@@ -297,7 +303,7 @@ $this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$p
     $c = $this->module('imageresize')->getConfig();
 
     // change only custom directory
-    if (\is_string($c['customFolder']) && !$c['prettyNames']) {
+    if (!$c['prettyNames'] && \is_string($c['customFolder'])) {
         $dir = '/'.\trim($c['customFolder'], '/').'/';
         if ($dir == '//') $dir = '/';
         $path = \str_replace('/'.\date('Y/m/d').'/', $dir, $path);
@@ -306,15 +312,21 @@ $this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$p
 
     // prettify file names and change custom dir
     if ($c['prettyNames']) {
-        $asset = $this->module('imageresize')->changePath($asset, $file, $path);
+        $asset = $this->module('imageresize')->changePath($asset, $file);
         $path  = $asset['path'];
     }
 
     // replace uploaded file with resized file
-    if ($c['enabled'] !== true) return;
+    if (!$c['enabled'] && $c['optimize']) {
+        $this->module('imageresize')->optimize($file);
+        $asset['size'] = \filesize($file);
+        $asset['optimized'] = true;
+    }
 
-    $asset = $this->module('imageresize')->replaceAsset($asset, $opts, $file);
-
+    // run all steps
+    if ($c['enabled']) {
+        $asset = $this->module('imageresize')->replaceAsset($asset, $opts, $file);
+    }
 
 });
 
@@ -323,7 +335,7 @@ $this->on('cockpit.assets.remove', function($assets) {
 
     $c = $this->module('imageresize')->getConfig();
 
-    if ($c['enabled'] !== true) return;
+    if (!$c['enabled']) return;
 
     foreach($assets as $asset) {
         if (isset($asset['sizes']) && \is_array($asset['sizes'])) {

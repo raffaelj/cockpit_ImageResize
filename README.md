@@ -62,7 +62,7 @@ imageresize:
     quality: 80                   # default: 100
     prettyNames: true             # boolean, default: false - number suffix instead of uniqid pefix
     customFolder: /images         # string, default: null -  original date pattern folder
-    optimize: true                # boolean, default: false -  Spatie image optimizer
+    optimize: true                # boolean, default: false - Spatie image optimizer (requires additional binaries)
     replaceAssetsManager: true    # use modified assets manager
     profiles:                     # create multiple image sizes
         thumbnail:                # save in /uploads/thumbnail/image.jpg
@@ -128,5 +128,6 @@ Now the script processes only 10 files at once.
 * [x] overwrite default date pattern in uploads folder to custom folder
 * [ ] force recreation when changing defaults
 * [ ] GUI for profiles
++ [ ] fine tuning for image optimizer
 
 [1]: https://github.com/agentejo/cockpit/
