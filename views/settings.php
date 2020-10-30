@@ -8,7 +8,7 @@
 
 
 <div class="uk-container-center uk-width-xlarge-3-4 uk-position-relative" riot-view>
-    
+
     <div style="position:absolute;top:-2em;right:0;">
     <field-boolean bind="displayJson" label="JSON"></field-boolean>
     </div>
@@ -29,7 +29,7 @@
                               <label class="uk-display-block uk-margin-small">
                                   @lang('Enable automatic image resizing')
                               </label>
-                              <field-boolean bind="config.enabled" label="@lang('enabled')"></field-boolean>
+                              <field-boolean bind="config.resize" label="@lang('resize')"></field-boolean>
                           </div>
 
                           <div class="uk-panel-box uk-width-1-3">
@@ -84,17 +84,7 @@
                       </div>
 
                   </div>
-<!--
-                  <div class="uk-panel-box uk-panel-card uk-margin">
 
-                      @lang('Replace all existing images'):
-
-                      <a class="uk-button" onclick="{ replaceAssets }">@lang('Replace')</a>
-
-                      @lang('This may take a while').
-
-                  </div>
--->
               </div>
 
               <cp-actionbar>
@@ -157,22 +147,7 @@
             });
 
         }
-/* 
-        replaceAssets() {
 
-            App.ui.confirm("Are you sure?", function() {
-
-                App.request('/imageresize/replaceAssets').then(function(data) {
-
-                   if (data) {
-                        App.ui.notify("Replacing successful", "success");
-                    } else {
-                        App.ui.notify("Replacing failed.", "danger");
-                    }
-                });
-            });
-        }
-*/
     </script>
 
 </div>

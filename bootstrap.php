@@ -172,7 +172,7 @@ $this->module('imageresize')->extend([
         // create extra images from profiles
         foreach ($c['profiles'] as $name => $options) {
 
-            if ($resized = $this->resizeAsset($asset, $file, $opts, $name, $options)) {
+            if ($resized = $this->createResizedAssetFromProfile($asset, $file, $opts, $name, $options)) {
 
                 $asset['sizes'][$name] = $resized;
 
@@ -184,7 +184,7 @@ $this->module('imageresize')->extend([
 
     },
 
-    'resizeAsset' => function($asset, $file = null, $opts = null, $name, $options) {
+    'createResizedAssetFromProfile' => function($asset, $file = null, $opts = null, $name, $options = null) {
 
         // skip if not image (or svg)
         if (!$asset['image'] || !(isset($asset['width']) && isset($asset['height']))) return;
@@ -209,6 +209,10 @@ $this->module('imageresize')->extend([
             }
 
             $file = $src;
+        }
+
+        if (!$options) {
+            $options = $this->config['profiles'][$name];
         }
 
         $c = array_replace([
@@ -321,6 +325,15 @@ $this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$p
         $this->module('imageresize')->optimize($file);
         $asset['size'] = \filesize($file);
         $asset['optimized'] = true;
+    }
+
+    // create extra images from profiles
+    if (!$c['resize'] && \is_array($c['profiles'])) {
+        foreach ($c['profiles'] as $name => $options) {
+            if ($resized = $this->module('imageresize')->createResizedAssetFromProfile($asset, $file, $opts, $name, $options)) {
+                $asset['sizes'][$name] = $resized;
+            }
+        }
     }
 
     // run all steps

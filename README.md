@@ -1,10 +1,12 @@
 # ImageResize
 
-Addon for [Cockpit CMS][1] to resize uploaded images automatically
+Addon for [Cockpit CMS][1] to resize and optimize uploaded images automatically
 
-## Requirements
+## Requirements, compatibility
 
 Since v0.2.0, ImageResize requires Cockpit v0.10.1 or above.
+
+If you enable the `optimize` option, the [ImageOptimizer addon] is obsolute. Don't use both addons together.
 
 ## Installation
 
@@ -47,35 +49,66 @@ There is no option in the assets manager to choose the original file, but your a
 
 ## Options
 
-Use the GUI or add options to `/config/config.yaml`.
+The GUI is outdated and doesn't provide all options.
 
-If you set `maxWidth` or `maxHeight` to `0` (zero), the value will be ignored.
+`config/config.php`:
 
-```yaml
-imageresize:
-    enabled: true                 # boolean, default: false
-    keepOriginal: true            # boolean, default: true
-    moveOriginalTo: original      # string, default: "full"
-    maxWidth: 2500                # int, default: 1920
-    maxHeight: 2500               # int, default: 0
-    method: bestFit               # string, default: bestFit
-    quality: 80                   # default: 100
-    prettyNames: true             # boolean, default: false - number suffix instead of uniqid pefix
-    customFolder: /images         # string, default: null -  original date pattern folder
-    optimize: true                # boolean, default: false - Spatie image optimizer (requires additional binaries)
-    replaceAssetsManager: true    # use modified assets manager
-    profiles:                     # create multiple image sizes
-        thumbnail:                # save in /uploads/thumbnail/image.jpg
-            width: 100
-            height: 100
-            method: thumbnail     # default: thumbnail
-            quality: 70           # default: 100
-        headerimage:
-            width: 1200
-            height: 400
-            method: thumbnail
-            quality: 70
-            folder: header        # save in /uploads/header/image.jpg
+```php
+<?php
+return [
+    'app.name' => 'ImageResize Test',
+
+    'imageresize' => [
+        'resize'       => false,        # (bool) default: true
+
+        # create a copy of uploaded files in `/original/img.jpg`
+        'keepOriginal' => true,         # (bool) default: true
+        'moveOriginalTo' => 'original', # (string) default: full
+
+        # resize options, that are passed to SimpleImage library
+        # If you set maxWidth or maxHeight to 0 (zero), the value will be ignored.
+        'maxWidth'     => 1920,         # (int) default: 1920
+        'maxHeight'    => 0,            # (int) default: 0
+        'method'       => 'bestFit',    # (string) default: bestFit
+        'quality'      => 100,          # (int) default: 100
+
+        # remove uniqid from file names, duplicates will have increasing number suffixes
+        'prettyNames'  => true,         # (bool) default: false
+
+        # overwrite original date pattern - `/2020/10/30/img.jpg` --> `/images/img.jpg`
+        'customFolder' => '/images',    # (string|null) default: null
+
+        # Spatie image optimizer (requires additional binaries)
+        'optimize'     => true,         # (bool) default: false
+
+        # use modified assets manager
+        'replaceAssetsManager' => true, # (bool) default: false
+
+        # add multiple sizes like thumbnail
+        'profiles' => [
+            'small' => [                # --> `/small/img.jpg`
+                'width'   => 500,
+                'height'  => 0,
+                'method'  => 'bestFit', # (string) default: thumbnail
+                'quality' => 70,        # (int) default: 100
+            ],
+            'thumbs' => [               # --> `/thumbs/img.jpg`
+                'width'   => 100,
+                'height'  => 100,
+                'method'  => 'thumbnail',
+                'quality' => 70,
+            ],
+            'headerimage' => [
+                'width'   => 1200,
+                'height'  => 400,
+                'method'  => 'thumbnail',
+                'quality' => 70,
+                # set custom folder, that doesn't match profile name --> `/header/img.jpg`
+                'folder'  => 'header'   # (string) if omited, the key name 'headerimage' is used
+            ],
+        ],
+    ],
+];
 ```
 
 ## ACL
@@ -118,6 +151,13 @@ Now the script processes only 10 files at once.
 * `copyright` field for assets
 * select different sizes (profiles) in assetsmanager
 
+## Spatie image optimizer
+
+If you wonder, why the optimizer doesn't work, you have to install some binaries in your environment.
+See: https://github.com/spatie/image-optimizer#optimization-tools
+
+I tested it successfully on my local devolopment machine with the [raffaelj/php7-apache-imgopt][4] docker image.
+
 ## To do
 
 * [x] batch action for existing files
@@ -128,6 +168,13 @@ Now the script processes only 10 files at once.
 * [x] overwrite default date pattern in uploads folder to custom folder
 * [ ] force recreation when changing defaults
 * [ ] GUI for profiles
-+ [ ] fine tuning for image optimizer
++ [ ] fine tuning for image optimizer (especially SVG)
+
+## Credits and third party libraries
+
+* Spatie image optimizer, MIT Licensed, https://spatie.be/
 
 [1]: https://github.com/agentejo/cockpit/
+[2]: https://github.com/pauloamgomes/CockpitCMS-ImageOptimizer
+[3]: https://github.com/spatie/image-optimizer
+[4]: https://hub.docker.com/r/raffaelj/php7-apache-imgopt

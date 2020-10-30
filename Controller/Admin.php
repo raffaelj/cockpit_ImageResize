@@ -54,7 +54,7 @@ class Admin extends \Cockpit\AuthController {
         // force rebuilding thumbnail when calling from admin ui
         $options['rebuild'] = true;
 
-        return $this->app->module('imageresize')->resizeAsset($asset, null, null, $name, $options);
+        return $this->app->module('imageresize')->createResizedAssetFromProfile($asset, null, null, $name, $options);
 
     }
 
