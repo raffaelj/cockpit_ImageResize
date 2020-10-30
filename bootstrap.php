@@ -22,7 +22,7 @@ $this->module('imageresize')->extend([
 
             $this->config = array_replace_recursive(
                 [
-                    'enabled'      => false,
+                    'resize'       => true,
                     'keepOriginal' => true,       # boolean, default: true
                     'moveOriginalTo' => 'full',   # /uploads/full
                     'maxWidth'     => 1920,
@@ -317,14 +317,14 @@ $this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$p
     }
 
     // replace uploaded file with resized file
-    if (!$c['enabled'] && $c['optimize']) {
+    if (!$c['resize'] && $c['optimize']) {
         $this->module('imageresize')->optimize($file);
         $asset['size'] = \filesize($file);
         $asset['optimized'] = true;
     }
 
     // run all steps
-    if ($c['enabled']) {
+    if ($c['resize']) {
         $asset = $this->module('imageresize')->replaceAsset($asset, $opts, $file);
     }
 
@@ -335,7 +335,7 @@ $this->on('cockpit.assets.remove', function($assets) {
 
     $c = $this->module('imageresize')->getConfig();
 
-    if (!$c['enabled']) return;
+    if (!$c['resize']) return;
 
     foreach($assets as $asset) {
         if (isset($asset['sizes']) && \is_array($asset['sizes'])) {
