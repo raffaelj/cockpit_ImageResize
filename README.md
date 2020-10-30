@@ -6,15 +6,49 @@ Addon for [Cockpit CMS][1] to resize and optimize uploaded images automatically
 
 Since v0.2.0, ImageResize requires Cockpit v0.10.1 or above.
 
+I rewrote a lot of the code to make use of the new `cockpit.asset.upload` event. It should now also be compatible with the cloud storage addon, but I wasn't able to test it, yet.
+
 If you enable the `optimize` option, the [ImageOptimizer addon] is obsolute. Don't use both addons together.
 
 ## Installation
 
-Copy this repository into `/addons` and name it `ImageResize` or
+Copy this repository into `/addons` and name it `ImageResize` or use the cli.
+
+### via git
 
 ```bash
 cd path/to/cockpit
 git clone https://github.com/raffaelj/cockpit_ImageResize.git addons/ImageResize
+```
+
+### via cp cli
+
+```bash
+cd path/to/cockpit
+./cp install/addon --name ImageResize --url https://github.com/raffaelj/cockpit_ImageResize/archive/master.zip
+```
+
+### via composer
+
+Make sure, that the path to cockpit addons is defined in your projects' `composer.json` file.
+
+```json
+{
+    "name": "my/cockpit-project",
+    "extra": {
+        "installer-paths": {
+            "addons/{$name}": ["type:cockpit-module"]
+        }
+    }
+}
+```
+
+```bash
+cd path/to/cockpit-root
+composer create-project --ignore-platform-reqs aheinze/cockpit .
+composer config extra.installer-paths.addons/{\$name} "type:cockpit-module"
+
+composer require --ignore-platform-reqs raffaelj/cockpit-imageresize
 ```
 
 ## Usage

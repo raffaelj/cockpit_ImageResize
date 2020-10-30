@@ -2,7 +2,9 @@
 
 ## 0.2.0
 
-* added option to use pretty file names - without uniqid, but with number suffix
+* resizing is enabled by default (before, you had to set `enabled: true`)
+* replaced `enabled` option with `resize` option (default: true)
+* added option to use pretty file names - without uniqid, but with number suffix for duplicates
 * added option for custom folder - still inside `uploads` folder
 * added image optimizer (Spatie)
 * updated modified assets manager with latest core features

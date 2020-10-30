@@ -1,8 +1,8 @@
 {
     "name": "raffaelj/cockpit-imageresize",
     "type": "cockpit-module",
-    "description": "Resize uploaded images automatically in Cockpit CMS",
-    "keywords": ["cockpit", "image", "resize"],
+    "description": "Resize and optimize uploaded images automatically in Cockpit CMS",
+    "keywords": ["cockpit", "image", "resize", "optimize"],
     "homepage": "https://github.com/raffaelj/cockpit_ImageResize",
     "license": "MIT",
     "authors": [
