@@ -20,7 +20,7 @@ $this->module('imageresize')->extend([
 
         if (!$this->config) {
 
-            $this->config = array_replace_recursive(
+            $this->config = \array_replace_recursive(
                 [
                     'resize'       => true,
                     'keepOriginal' => true,       # boolean, default: true
@@ -56,7 +56,7 @@ $this->module('imageresize')->extend([
         $name = $path_parts['filename'];
         $ext  = $path_parts['extension'];
 
-        $dir = '/'.date('Y/m/d').'/';
+        $dir = '/'.\date('Y/m/d').'/';
 
         if (\is_string($this->config['customFolder'])) {
             $dir = '/'.\trim($this->config['customFolder'], '/').'/';
@@ -215,7 +215,7 @@ $this->module('imageresize')->extend([
             $options = $this->config['profiles'][$name];
         }
 
-        $c = array_replace([
+        $c = \array_replace([
             'width'   => 1920,
             'height'  => 0,
             'method'  => 'thumbnail',
@@ -233,7 +233,7 @@ $this->module('imageresize')->extend([
 
         $dir = !empty($c['folder']) ? $c['folder'] : $name;
         $dir = '/'.\trim($dir, '/').'/';
-        $file_name = basename($asset['path']);
+        $file_name = \basename($asset['path']);
 
         $destination = "{$dir}{$file_name}";
 
