@@ -258,12 +258,12 @@ $this->module('imageresize')->extend([
                 ->toString(null, $c['quality']);
 
         // write img to tmp file
-        $tmp = $this->app->path('#tmp:').uniqid()."_{$name}_{$file_name}";
+        $tmp = $this->app->path('#tmp:').\uniqid()."_{$name}_{$file_name}";
         $this->app->helper('fs')->write($tmp, $img);
 
         unset($img);
 
-        if ($c['optimize']) {
+        if ($c['optimize'] ?? false) {
             $this->optimize($tmp);
         }
 
@@ -284,7 +284,7 @@ $this->module('imageresize')->extend([
             'size'   => \filesize($tmp),
         ];
 
-        if ($c['optimize']) {
+        if ($c['optimize'] ?? false) {
             $return['optimized'] = true;
         }
 
