@@ -868,7 +868,7 @@
                   <div class="">
 
                       <label class="uk-text-small uk-text-bold">{ App.i18n.get('Regenerate size') }</label>
-                      <i class="uk-icon-info-circle uk-margin-small-left" title="{ App.i18n.get('Set the focal point and click \'Generate\'') }" data-uk-tooltip></i>
+                      <i class="uk-icon-info-circle uk-margin-small-left" title="{ App.i18n.get('Select the default size, set the focal point and click \'Generate\' - You than have to reload the page to see the updated image size because of caching issues.') }" data-uk-tooltip></i>
                       <ul class="uk-list">
                           <li each="{ options, size in profiles }">
                           { size }
