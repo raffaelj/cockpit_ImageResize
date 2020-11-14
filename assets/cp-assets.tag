@@ -312,6 +312,11 @@
                 '/assets/lib/uppie.js'
             ], function() {
 
+                // custom
+                var filesCount = 0,
+                    completed  = 0;
+                // custom
+
                 var uploadSettings = {
 
                     action: App.route('/assetsmanager/upload'),
@@ -322,16 +327,94 @@
                     loadstart: function() {
                         $this.refs.uploadprogress.classList.remove('uk-hidden');
                     },
-                    progress: function(percent) {
+//                     progress: function(percent) {
+// 
+//                         percent = Math.ceil(percent) + '%';
+// 
+//                         $this.refs.progressbar.innerHTML   = '<span>'+percent+'</span>';
+//                         $this.refs.progressbar.style.width = percent;
+//                     },
+                    // custom
+                    beforeAll: function(files) {
 
-                        percent = Math.ceil(percent) + '%';
-
+                        // remove previous progress bars
+                        App.$($this.refs.uploadprogress.find('.uk-progress:not(:first-child)')).remove();
+                        var percent = '0%';
                         $this.refs.progressbar.innerHTML   = '<span>'+percent+'</span>';
                         $this.refs.progressbar.style.width = percent;
+
+                        filesCount = files.length;
+
+                        Array.prototype.forEach.call(files, function(file) {
+                            var el       = document.createElement('div'),
+                                subEl    = document.createElement('div'),
+                                fileName = App.Utils.sluggify(file.name);
+                            el.classList.add('uk-progress');
+                            subEl.classList.add('uk-progress-bar');
+                            subEl.style.width = '0%';
+                            subEl.setAttribute('data-progressbar', fileName);
+                            subEl.textContent = fileName;
+                            el.appendChild(subEl);
+                            $this.refs.uploadprogress.appendChild(el);
+                        });
+                    },
+                    complete: function(response, xhr) {
+
+                        completed++;
+
+                        var percent  = Math.ceil(100 / filesCount * completed) +'%'
+
+                        if (response.uploaded && response.uploaded.length) {
+
+                            var fileName = App.Utils.sluggify(response.uploaded[0]);
+
+                            var progressbar = document.querySelector('[data-progressbar="'+fileName+'"]');
+
+                            if (progressbar) {
+
+                                $this.refs.progressbar.innerHTML   = '<span>'+percent+'</span>';
+                                $this.refs.progressbar.style.width = percent;
+
+                                progressbar.innerHTML   = '<span>'+fileName+' 100%</span>';
+                                progressbar.style.width = '100%';
+                            }
+
+                        }
+
+                        if (response.failed && response.failed.length) {
+
+                            var fileName = App.Utils.sluggify(response.failed[0]);
+
+                            var progressbar = document.querySelector('[data-progressbar="'+fileName+'"]');
+
+                            if (progressbar) {
+
+                                $this.refs.progressbar.innerHTML   = '<span>'+percent+'</span>';
+                                $this.refs.progressbar.style.width = percent;
+
+                                progressbar.parentElement.classList.add('uk-progress-danger');
+                                progressbar.innerHTML   = '<span>'+fileName+' 0%</span>';
+                                progressbar.style.width = '100%';
+
+                            }
+
+                        }
+
+                        if (progressbar) {
+                            setTimeout(function() {
+                                progressbar.parentElement.classList.add('uk-hidden');
+                            }, 5000);
+                        }
+
                     },
                     allcomplete: function(response) {
 
-                        $this.refs.uploadprogress.classList.add('uk-hidden');
+                        setTimeout(function() {
+                            $this.refs.uploadprogress.classList.add('uk-hidden');
+                        }, 5000);
+
+                        filesCount = 0,
+                        completed  = 0;
 
                         if (response && response.failed && response.failed.length) {
                             App.ui.notify("File(s) failed to upload.", "danger");
@@ -339,24 +422,17 @@
 
                         if (response && Array.isArray(response.assets) && response.assets.length) {
 
-                            if (!Array.isArray($this.assets)) {
-                                $this.assets = [];
-                            }
-
                             App.ui.notify("File(s) uploaded.", "success");
-
-                            response.assets.forEach(function(asset){
-                                $this.assets.unshift(asset);
-                            });
-
-                            $this.listAssets(1);
                         }
 
                         if (!response) {
                             App.ui.notify("Something went wrong.", "danger");
                         }
 
+                        $this.listAssets(1);
+
                     }
+                    // custom
                 },
 
                 uploadselect = UIkit.uploadSelect(App.$('.js-upload-select', $this.root)[0], uploadSettings),
