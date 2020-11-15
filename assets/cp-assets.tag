@@ -177,7 +177,9 @@
                                 <th class="uk-text-small uk-noselect">{ App.i18n.get('Title') }</th>
                                 <th class="uk-text-small uk-noselect" width="20%">{ App.i18n.get('Type') }</th>
                                 <th class="uk-text-small uk-noselect" width="10%">{ App.i18n.get('Size') }</th>
+                                <!-- custom -->
                                 <th class="uk-text-small uk-noselect" width="10%">{ App.i18n.get('Sizes') }</th>
+                                <!-- custom -->
                                 <th class="uk-text-small uk-noselect" width="10%">{ App.i18n.get('Updated') }</th>
                                 <th class="uk-text-small uk-noselect" width="30"></th>
                             </tr>
@@ -198,7 +200,9 @@
                                 </td>
                                 <td class="uk-text-small">{ asset.mime }</td>
                                 <td class="uk-text-small">{ App.Utils.formatSize(asset.size) }</td>
+                                <!-- custom -->
                                 <td class="uk-text-small"><raw if="{ asset.sizes && App.Utils.isObject(asset.sizes) }" content="{ App.Utils.renderer.tags(Object.keys(asset.sizes)) }"></raw></td>
+                                <!-- custom -->
                                 <td class="uk-text-small">{ App.Utils.dateformat( new Date( 1000 * asset.modified )) }</td>
                                 <td>
                                     <span class="uk-float-right" data-uk-dropdown="mode:'click'">
