@@ -112,12 +112,12 @@ $this->module('imageresize')->extend([
         }
 
         // use orginal size if 0
-        $maxWidth  = $c['maxWidth']  ? $c['maxWidth']  : $asset['width'];
-        $maxHeight = $c['maxHeight'] ? $c['maxHeight'] : $asset['height'];
+        $maxWidth  = $c['maxWidth']  ? $c['maxWidth']  : ($asset['width'] ?? 0);
+        $maxHeight = $c['maxHeight'] ? $c['maxHeight'] : ($asset['height'] ?? 0);
 
-        if (!($asset['width'] > $maxWidth || $asset['height'] > $maxHeight)) {
+//         if (!($asset['width'] > $maxWidth || $asset['height'] > $maxHeight)) {
 //             return;
-        }
+//         }
 
         // copy original file to full dir
         if ($c['keepOriginal']) {
@@ -134,15 +134,15 @@ $this->module('imageresize')->extend([
 
             $asset['sizes']['full'] = [
                 'path'   => $destination,
-                'width'  => $asset['width'],
-                'height' => $asset['height'],
                 'size'   => $asset['size'],
             ];
+            if (isset($asset['width']))  $asset['sizes']['full']['width']  = $asset['width'];
+            if (isset($asset['height'])) $asset['sizes']['full']['height'] = $asset['height'];
 
         }
 
         // resize only images, not svg
-        if ($asset['image'] && (isset($asset['width']) && isset($asset['height']))) {
+        if (($asset['image'] ?? false) && (isset($asset['width']) && isset($asset['height']))) {
             // resize image
             $img = $this->app->helper('image')
                     ->take($file)
