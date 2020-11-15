@@ -111,6 +111,17 @@ $this->module('imageresize')->extend([
             return;
         }
 
+        // create extra images from profiles
+        foreach ($c['profiles'] as $name => $options) {
+
+            if ($resized = $this->createResizedAssetFromProfile($asset, $file, $opts, $name, $options)) {
+
+                $asset['sizes'][$name] = $resized;
+
+            }
+
+        }
+
         // use orginal size if 0
         $maxWidth  = $c['maxWidth']  ? $c['maxWidth']  : ($asset['width'] ?? 0);
         $maxHeight = $c['maxHeight'] ? $c['maxHeight'] : ($asset['height'] ?? 0);
@@ -167,17 +178,6 @@ $this->module('imageresize')->extend([
             $this->optimize($file);
             $asset['size'] = \filesize($file);
             $asset['optimized'] = true;
-        }
-
-        // create extra images from profiles
-        foreach ($c['profiles'] as $name => $options) {
-
-            if ($resized = $this->createResizedAssetFromProfile($asset, $file, $opts, $name, $options)) {
-
-                $asset['sizes'][$name] = $resized;
-
-            }
-
         }
 
         return $asset;
@@ -320,13 +320,6 @@ $this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$p
         $path  = $asset['path'];
     }
 
-    // replace uploaded file with resized file
-    if (!$c['resize'] && $c['optimize']) {
-        $this->module('imageresize')->optimize($file);
-        $asset['size'] = \filesize($file);
-        $asset['optimized'] = true;
-    }
-
     // create extra images from profiles
     if (!$c['resize'] && \is_array($c['profiles'])) {
         foreach ($c['profiles'] as $name => $options) {
@@ -334,6 +327,13 @@ $this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$p
                 $asset['sizes'][$name] = $resized;
             }
         }
+    }
+
+    // replace uploaded file with resized file
+    if (!$c['resize'] && $c['optimize']) {
+        $this->module('imageresize')->optimize($file);
+        $asset['size'] = \filesize($file);
+        $asset['optimized'] = true;
     }
 
     // run all steps
