@@ -2,6 +2,9 @@
 
     <style>
         .uk-breadcrumb { margin-bottom: 0; }
+        .uk-progress-bar {
+            white-space: nowrap;
+        }
     </style>
 
     <div ref="list" show="{ mode=='list' }">
