@@ -72,8 +72,8 @@ $this->module('imageresize')->extend([
                     'prettyNames'  => false,      # remove uniqid from file names
                     'customFolder' => null,       # overwrite original date pattern
                     'optimize'     => false,      # Use Spatie optimizer
-                    'replaceAssetsManager' => false, # modified assets manager
-                    // 'renameToTitle' => false,  # rename image to title (for SEO), to do... (must be unique)
+                    'replaceAssetsManager' => false,   # modified assets manager
+                    'syncFileNamesWithTitle' => false, # set file name to sluggified title (experimental)
                 ],
                 $this->app->storage->getKey('cockpit/options', 'imageresize', []),
                 $this->app->retrieve('imageresize', [])
@@ -352,6 +352,85 @@ $this->module('imageresize')->extend([
 
     },
 
+    'syncAssetPathWithTitle' => function($asset) {
+
+        // addAssets and updateAssets share the same event
+        $isUpdate = isset($asset['_id']);
+
+        if (!$isUpdate) return false;
+
+        if (!isset($asset['title']) || !\is_string($asset['title'])) return false;
+
+        $title = \trim($asset['title']);
+
+        if (empty($title)) return false;
+
+        $origPath = $asset['path'];
+
+        $path_parts = \pathinfo($origPath);
+        $dir  = $path_parts['dirname'] ?? '';
+        $name = $path_parts['filename'];
+        $ext  = $path_parts['extension'];
+        $basename = $path_parts['basename'] ?? '';
+
+        if ($title == \trim($basename, '/')) return false;
+
+        $newFileName = $this->app->helper('utils')->sluggify($title);
+
+        $dir = \rtrim($dir, '/');
+
+        $newPath = "{$dir}/{$newFileName}.{$ext}";
+
+        if ($newPath == $origPath) return false;
+
+        if ($this->app->filestorage->has('assets://'.$asset['path'])) {
+
+            $num = 0;
+            while ($this->app->filestorage->has("assets://{$newPath}")) {
+                $num++;
+                $newPath = "{$dir}/{$newFileName}-{$num}.{$ext}";
+
+                if ($newPath == $origPath) return false;
+            }
+
+            $this->app->filestorage->rename('assets://'.$asset['path'], $newPath);
+
+        }
+
+        $asset['path'] = $newPath;
+
+
+        if (isset($asset['sizes']) && \is_array($asset['sizes'])) {
+
+            foreach ($asset['sizes'] as &$profile) {
+
+                $path_parts = \pathinfo($profile['path']);
+                $dir = $path_parts['dirname'] ?? '';
+                $dir = \rtrim($dir, '/');
+
+                $newPath = "{$dir}/{$newFileName}.{$ext}";
+
+                if ($this->app->filestorage->has('assets://'.$profile['path'])) {
+
+                    $num = 0;
+                    while ($this->app->filestorage->has("assets://{$newPath}")) {
+                        $num++;
+                        $newPath = "{$dir}/{$newFileName}-{$num}.{$ext}";
+                    }
+
+                    $this->app->filestorage->rename('assets://'.$profile['path'], $newPath);
+
+                    $profile['path'] = $newPath;
+
+                }
+
+            }
+        }
+
+        return $asset;
+
+    },
+
 ]);
 
 $this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$path) {
@@ -410,6 +489,28 @@ $this->on('cockpit.assets.remove', function($assets) {
                 }
             }
         }
+    }
+
+});
+
+// sync file names with image titles (useful for SEO) - experimental
+$this->on('cockpit.asset.save', function(&$asset) {
+
+    $isUpdate = isset($asset['_id']);
+
+    if (!$isUpdate) return;
+
+    $c = $this->module('imageresize')->getConfig();
+
+    if (!$c['syncFileNamesWithTitle']) return;
+
+    if ($ret = $this->module('imageresize')->syncAssetPathWithTitle($asset)) {
+
+        $asset = $ret;
+
+        // after changing the file paths, all assets, galleries etc. in collection entries
+        // and singletons should be updated...
+        $this->trigger('imageresize.asset.path.update', [$asset]);
     }
 
 });
