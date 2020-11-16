@@ -5,6 +5,18 @@
         .uk-progress-bar {
             white-space: nowrap;
         }
+        .uk-table-tabbed th.selectall {
+            font-size: 16px;
+        }
+        .selectall .uk-checkbox {
+            vertical-align: bottom;
+        }
+        .selectall .uk-checkbox:before {
+            box-sizing: border-box;
+        }
+        .uk-checkbox:checked:after {
+            transform: translate(5%, 5%);
+        }
     </style>
 
     <div ref="list" show="{ mode=='list' }">
@@ -175,7 +187,7 @@
                         <thead>
                             <tr>
                                 <!-- custom -->
-                                <th width="30" class="uk-text-center"><input class="uk-checkbox" type="checkbox" data-check="all" onclick="{ selectAll }"></th>
+                                <th width="30" class="uk-text-center selectall"><input class="uk-checkbox" type="checkbox" ref="selectall" onclick="{ selectAll }" title="{ App.i18n.get('Select all') }" data-uk-tooltip /></th>
                                 <!-- custom -->
                                 <th class="uk-text-small uk-noselect">{ App.i18n.get('Title') }</th>
                                 <th class="uk-text-small uk-noselect" width="20%">{ App.i18n.get('Type') }</th>
@@ -661,13 +673,24 @@
                 this.selected.splice(idx, 1);
             }
 
+            // custom
+            if (this.selected.length == this.assets.length) {
+                this.refs.selectall.checked = true;
+                this.refs.selectall.setAttribute('checked', true);
+            }
+            else {
+                this.refs.selectall.checked = false;
+                this.refs.selectall.removeAttribute('checked');
+            }
+            // custom
+
             App.$(this.root).trigger('selectionchange', [this.selected]);
         }
 
         // custom
         selectAll(e) {
 
-            this.selected = this.selected != this.assets ? this.assets : [];
+            this.selected = this.selected.length != this.assets.length ? [].concat(this.assets) : [];
 
             App.$(this.root).trigger('selectionchange', [this.selected]);
         }
