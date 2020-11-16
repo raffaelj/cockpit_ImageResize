@@ -16,6 +16,45 @@ $this->module('imageresize')->extend([
 
     'config' => null,
 
+    'spatieOptimizers' => [
+        'Jpegoptim',
+        'Pngquant',
+        'Optipng',
+        'Svgo',
+        'Gifsicle',
+        'Cwebp',
+    ],
+
+    'spatieOptions' => [
+        'Jpegoptim' => [
+            '-m85',
+            '--strip-all',
+            '--all-progressive',
+        ],
+        'Pngquant' => [
+            '--force',
+            '--skip-if-larger',
+        ],
+        'Optipng' => [
+            '-i0',
+            '-o2',
+            '-quiet',
+        ],
+        'Svgo' => [
+            '--disable={cleanupIDs,removeViewBox}',
+        ],
+        'Gifsicle' => [
+            '-b',
+            '-O3',
+        ],
+        'Cwebp' => [
+            '-m 6',
+            '-pass 10',
+            '-mt',
+            '-q 80',
+        ],
+    ],
+
     'getConfig' => function($key = null) {
 
         if (!$this->config) {
@@ -296,7 +335,20 @@ $this->module('imageresize')->extend([
 
     'optimize' => function($file) {
 
-        \Spatie\ImageOptimizer\OptimizerChainFactory::create()->optimize($file);
+//         \Spatie\ImageOptimizer\OptimizerChainFactory::create()->optimize($file);
+
+        $optimizerChain = (new Spatie\ImageOptimizer\OptimizerChain);
+
+        foreach ($this->spatieOptimizers as $optimizer) {
+
+            $name = "Spatie\\ImageOptimizer\\Optimizers\\{$optimizer}";
+            $opts = $this->spatieOptions[$optimizer] ?? [];
+
+            $optimizerChain->addOptimizer(new $name($opts));
+
+        }
+
+        $optimizerChain->optimize($file);
 
     },
 
