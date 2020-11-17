@@ -352,32 +352,39 @@ $this->module('imageresize')->extend([
 
     },
 
-    'syncAssetPathWithTitle' => function($asset) {
+    'updateFileName' => function($asset, $fileName = null, $force = false) {
 
-        // addAssets and updateAssets share the same event
         $isUpdate = isset($asset['_id']);
 
         if (!$isUpdate) return false;
 
-        if (!isset($asset['title']) || !\is_string($asset['title'])) return false;
+        $_asset = $this->app->storage->findOne('cockpit/assets', ['_id' => $asset['_id']]);
 
-        $title = \trim($asset['title']);
-
-        if (empty($title)) return false;
-
-        $origPath = $asset['path'];
-
+        $origPath   = $_asset['path'];
         $path_parts = \pathinfo($origPath);
-        $dir  = $path_parts['dirname'] ?? '';
-        $name = $path_parts['filename'];
-        $ext  = $path_parts['extension'];
-        $basename = $path_parts['basename'] ?? '';
+        $dir        = \rtrim(($path_parts['dirname'] ?? ''), '/');
+        $name       = $path_parts['filename'];
+        $ext        = $path_parts['extension'];
+        $basename   = $path_parts['basename'] ?? '';
 
-        if ($title == \trim($basename, '/')) return false;
+        // use title by default
+        if (!$fileName) {
 
-        $newFileName = $this->app->helper('utils')->sluggify($title);
+            if (!isset($asset['title']) || !\is_string($asset['title'])) return false;
 
-        $dir = \rtrim($dir, '/');
+            // not changed
+            if (!$force && isset($_asset['title']) && $_asset['title'] === $asset['title']) return false;
+
+            $fileName = \trim($asset['title']);
+
+            if (empty($fileName)) return false;
+
+            // don't rename if title matches file name to avoid img.jpg.jpg
+            if ($title == \trim($basename, '/')) return false;
+
+        }
+
+        $newFileName = $this->app->helper('utils')->sluggify($fileName);
 
         $newPath = "{$dir}/{$newFileName}.{$ext}";
 
@@ -427,7 +434,7 @@ $this->module('imageresize')->extend([
             }
         }
 
-        return $asset;
+        return ['asset' => $asset];
 
     },
 
@@ -504,9 +511,11 @@ $this->on('cockpit.asset.save', function(&$asset) {
 
     if (!$c['syncFileNamesWithTitle']) return;
 
-    if ($ret = $this->module('imageresize')->syncAssetPathWithTitle($asset)) {
+    $ret = $this->module('imageresize')->updateFileName($asset);
 
-        $asset = $ret;
+    if ($ret && \is_array($ret) && isset($ret['asset'])) {
+
+        $asset = $ret['asset'];
 
         // after changing the file paths, all assets, galleries etc. in collection entries
         // and singletons should be updated...

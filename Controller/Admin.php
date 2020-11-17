@@ -58,4 +58,21 @@ class Admin extends \Cockpit\AuthController {
 
     }
 
+    public function updateFileName() {
+
+        $asset    = $this->app->param('asset');
+        $fileName = null;
+        $force    = true;
+
+        $ret = $this->app->module('imageresize')->updateFileName($asset, $fileName, $force);
+
+        if ($ret && \is_array($ret) && isset($ret['asset'])) {
+            $asset = $ret['asset'];
+            $this->app->storage->save('cockpit/assets', $asset);
+        }
+
+        return $ret ? $ret : ['error' => 'Renaming failed'];
+
+    }
+
 }

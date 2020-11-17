@@ -889,7 +889,7 @@
 
               <div class="uk-margin uk-panel-box uk-panel-card" if="{ imageResize }">
 
-                  <label class="uk-text-small uk-text-bold">ImageResize</label>
+                  <div class="uk-text-small uk-text-bold">ImageResize</div>
 
                   <div class="">
 
@@ -912,6 +912,10 @@
                           </li>
                       </ul>
 
+                  </div>
+
+                  <div class="">
+                      <a class="uk-button" onclick="{ updateFileName }">{ App.i18n.get('Rename file to title') }</a>
                   </div>
 
               </div>
@@ -1089,6 +1093,37 @@
             $this.asset.sizes[size] = data;
             $this.updateAsset();
 
+        });
+
+    }
+
+    updateFileName(e) {
+
+        if (e) e.preventDefault();
+
+        App.ui.confirm("Are you sure?", function() {
+
+            App.request('/imageresize/updateFileName', {asset: $this.asset}).then(function(data) {
+
+                if (data && data.asset) {
+
+                    App.$.extend($this.asset, data.asset);
+
+                    // update asset in parent list
+                    if ($this.parent && $this.parent.asset) {
+                        App.$.extend($this.parent.asset, data.asset);
+                    }
+
+                    App.ui.notify("Asset updated", "success");
+                    $this.update();
+
+                }
+
+                if (!data || data.error) {
+                    App.ui.notify(data && data.error ? data.error : 'Renaming failed', 'danger');
+                }
+
+            });
         });
 
     }
