@@ -1,5 +1,11 @@
 # Changelog
 
+## upcoming
+
+* improved custom assets manager
+* added option to rename files to sluggified titles
+* minor fixes
+
 ## 0.2.0
 
 * resizing is enabled by default (before, you had to set `enabled: true`)
