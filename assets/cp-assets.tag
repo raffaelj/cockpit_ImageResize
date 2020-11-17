@@ -241,11 +241,12 @@
 
             </div>
 
-            <div class="uk-margin uk-flex uk-flex-middle uk-noselect" if="{!loading && pages > 1 }">
+            <!--<div class="uk-margin uk-flex uk-flex-middle uk-noselect" if="{!loading && pages > 1 }">-->
+            <div class="uk-margin uk-flex uk-flex-middle uk-noselect" if="{!loading && (pages > 1 || limit != (opts.limit || 15)) }">
 
                 <ul class="uk-breadcrumb uk-margin-remove">
-                    <li class="uk-active"><span>{ page }</span></li>
-                    <li data-uk-dropdown="mode:'click'">
+                    <li class="uk-active" if="{ pages > 1 }"><span>{ page }</span></li>
+                    <li data-uk-dropdown="mode:'click'" if="{ pages > 1 }">
 
                         <a><i class="uk-icon-bars"></i> { pages }</a>
 
@@ -261,6 +262,24 @@
                         </div>
 
                     </li>
+                    <!-- custom-->
+                    <li data-uk-dropdown="mode:'click'">
+
+                        <a><i class="uk-icon-plus-square-o"></i> { limit }</a>
+
+                        <div class="uk-dropdown">
+
+                            <strong class="uk-text-small"> { App.i18n.get('Assets per page') }</strong>
+
+                            <div class="uk-margin-small-top">
+                                <ul class="uk-nav uk-nav-dropdown">
+                                    <li class="uk-text-small" each="{v in limitOptions}"><a class="uk-dropdown-close" onclick="{ parent.updateLimit }" data-limit="{ v }">{v}</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </li>
+                    <!-- custom-->
                 </ul>
 
                 <div class="uk-button-group uk-margin-small-left">
@@ -322,6 +341,10 @@
         this.page     = 1;
         this.pages    = 1;
         this.limit    = opts.limit || 15;
+
+        // custom
+        this.limitOptions = [10,15,20,50,100,500,1000];
+        // custom
 
         this.on('mount', function() {
 
@@ -592,6 +615,15 @@
 
             this.listAssets(page || 1);
         }
+
+        // custom
+        updateLimit(e) {
+
+            this.limit = parseInt(e.target.getAttribute('data-limit'), 10);
+
+            this.listAssets(1);
+        }
+        // custom
 
         remove(e) {
             var asset = e.item.asset,
