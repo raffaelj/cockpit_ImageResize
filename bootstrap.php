@@ -121,6 +121,9 @@ $this->module('imageresize')->extend([
 
     'replaceAsset' => function($asset, $opts = null, $file = null) {
 
+        $isImage = isset($asset['image']) && $asset['image'];
+        $isSVG   = \preg_match('/svg/', $asset['mime']);
+
         if (!$opts) $opts  = ['mimetype' => $asset['mime']];
 
         if (!$file) {
@@ -151,48 +154,33 @@ $this->module('imageresize')->extend([
         }
 
         // create extra images from profiles
-        foreach ($c['profiles'] as $name => $options) {
+        if ($isImage && !$isSVG) {
+            foreach ($c['profiles'] as $name => $options) {
 
-            if ($resized = $this->createResizedAssetFromProfile($asset, $file, $opts, $name, $options)) {
+                if ($resized = $this->createResizedAssetFromProfile($asset, $file, $opts, $name, $options)) {
 
-                $asset['sizes'][$name] = $resized;
-
+                    $asset['sizes'][$name] = $resized;
+                }
             }
-
         }
-
-        // use orginal size if 0
-        $maxWidth  = $c['maxWidth']  ? $c['maxWidth']  : ($asset['width'] ?? 0);
-        $maxHeight = $c['maxHeight'] ? $c['maxHeight'] : ($asset['height'] ?? 0);
-
-//         if (!($asset['width'] > $maxWidth || $asset['height'] > $maxHeight)) {
-//             return;
-//         }
-
         // copy original file to full dir
-        if ($c['keepOriginal']) {
+        $dontNeedBackup = $isSVG && (!$c['optimize']
+            || ($c['optimize'] && !\in_array('Svgo', $this->spatieOptimizers)));
 
-            $destination = '/'.\trim($c['moveOriginalTo'], '/').'/'.\basename($asset['path']);
+        if ($c['keepOriginal'] && $isImage && !$dontNeedBackup) {
 
-            // move file
-            $stream = \fopen($file, 'r+');
-            $this->app->filestorage->writeStream("assets://{$destination}", $stream, $opts);
+            $ret = $this->createBackup($asset, $file, $opts);
 
-            if (\is_resource($stream)) {
-                \fclose($stream);
-            }
-
-            $asset['sizes']['full'] = [
-                'path'   => $destination,
-                'size'   => $asset['size'],
-            ];
-            if (isset($asset['width']))  $asset['sizes']['full']['width']  = $asset['width'];
-            if (isset($asset['height'])) $asset['sizes']['full']['height'] = $asset['height'];
-
+            if ($ret) $asset = $ret;
         }
 
         // resize only images, not svg
-        if (($asset['image'] ?? false) && (isset($asset['width']) && isset($asset['height']))) {
+        if ($isImage && !$isSVG) {
+
+            // use orginal size if 0
+            $maxWidth  = $c['maxWidth']  ? $c['maxWidth']  : ($asset['width'] ?? 0);
+            $maxHeight = $c['maxHeight'] ? $c['maxHeight'] : ($asset['height'] ?? 0);
+
             // resize image
             $img = $this->app->helper('image')
                     ->take($file)
@@ -209,15 +197,42 @@ $this->module('imageresize')->extend([
                 $asset['size']    = \filesize($file);
                 $asset['resized'] = true;
             }
-        }
 
-        unset($img);
+            unset($img);
+        }
 
         if ($c['optimize']) {
             $this->optimize($file);
             $asset['size'] = \filesize($file);
             $asset['optimized'] = true;
         }
+
+        return $asset;
+
+    },
+
+    'createBackup' => function($asset, $file, $opts) {
+
+        if (!$opts) $opts = ['mimetype' => $asset['mime']];
+
+        $c = $this->getConfig();
+
+        $destination = '/'.\trim($c['moveOriginalTo'], '/').'/'.\basename($asset['path']);
+
+        // move file
+        $stream = \fopen($file, 'r+');
+        $this->app->filestorage->writeStream("assets://{$destination}", $stream, $opts);
+
+        if (\is_resource($stream)) {
+            \fclose($stream);
+        }
+
+        $asset['sizes']['full'] = [
+            'path'   => $destination,
+            'size'   => $asset['size'],
+        ];
+        if (isset($asset['width']))  $asset['sizes']['full']['width']  = $asset['width'];
+        if (isset($asset['height'])) $asset['sizes']['full']['height'] = $asset['height'];
 
         return $asset;
 
@@ -444,6 +459,9 @@ $this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$p
 
     $c = $this->module('imageresize')->getConfig();
 
+    $isImage = isset($asset['image']) && $asset['image'];
+    $isSVG   = \preg_match('/svg/', $asset['mime']);
+
     // change only custom directory
     if (!$c['prettyNames'] && \is_string($c['customFolder'])) {
         $dir = '/'.\trim($c['customFolder'], '/').'/';
@@ -458,8 +476,10 @@ $this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$p
         $path  = $asset['path'];
     }
 
+    if (!$isImage) return;
+
     // create extra images from profiles
-    if (!$c['resize'] && \is_array($c['profiles'])) {
+    if (!$c['resize'] && \is_array($c['profiles']) && !$isSVG) {
         foreach ($c['profiles'] as $name => $options) {
             if ($resized = $this->module('imageresize')->createResizedAssetFromProfile($asset, $file, $opts, $name, $options)) {
                 $asset['sizes'][$name] = $resized;
@@ -476,7 +496,8 @@ $this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$p
 
     // run all steps
     if ($c['resize']) {
-        $asset = $this->module('imageresize')->replaceAsset($asset, $opts, $file);
+        $ret = $this->module('imageresize')->replaceAsset($asset, $opts, $file);
+        if ($ret && \is_array($ret)) $asset = $ret;
     }
 
 });
