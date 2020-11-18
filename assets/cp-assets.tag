@@ -905,7 +905,7 @@
                           <a href="{ASSETS_URL+asset.path}" target="_blank"  title="{ App.i18n.get('Direct link to asset') }" data-uk-tooltip><i class="uk-icon-button uk-icon-button-outline uk-text-primary uk-icon-link"></i></a>
 
                           <!-- custom -->
-                          <a if="{ imageResize && asset.sizes }" each="{ options, name in asset.sizes }" href="{ASSETS_URL+options.path}" target="_blank" title="{ App.i18n.get('Direct link to asset')+' ('+name+')' }" data-uk-tooltip><i class="uk-icon-button uk-text-primary uk-icon-link uk-margin-small-left"></i></a>
+                          <a if="{ asset.mime.match(/^image\//) && asset.sizes }" each="{ options, name in asset.sizes }" href="{ASSETS_URL+options.path}" target="_blank" title="{ App.i18n.get('Direct link to asset')+' ('+name+')' }" data-uk-tooltip><i class="uk-icon-button uk-text-primary uk-icon-link uk-margin-small-left"></i></a>
                           <!-- custom -->
                       </div>
                   </div>
@@ -919,7 +919,7 @@
                   <input class="uk-width-1-1" type="text" bind="asset.copyright">
               </div>
 
-              <div class="uk-margin uk-panel-box uk-panel-card" if="{ imageResize }">
+              <div if="{ asset.mime.match(/^image\//) }" class="uk-margin uk-panel-box uk-panel-card">
 
                   <div class="uk-text-small uk-text-bold">ImageResize</div>
 
@@ -933,7 +933,7 @@
 
                   </div>
 
-                  <div class="">
+                  <div if="{ profiles }">
 
                       <label class="uk-text-small uk-text-bold">{ App.i18n.get('Regenerate size') }</label>
                       <i class="uk-icon-info-circle uk-margin-small-left" title="{ App.i18n.get('Select the default size, set the focal point and click \'Generate\' - You than have to reload the page to see the updated image size because of caching issues.') }" data-uk-tooltip></i>
@@ -1010,9 +1010,8 @@
 
     // custom
     // ImageResize addon
-    this.imageResize = false;
     this.currentSize = 'default';
-    this.profiles = this.parent ? this.parent.profiles : {};
+    this.profiles = this.parent && this.parent.profiles ? this.parent.profiles : null;
     // custom
 
     for (var tag in riot.tags) {
@@ -1031,14 +1030,19 @@
           
           $this.asset = asset;
 
-          // custom
-          // hide in entry modal or if not image
-          $this.imageResize = $this.parent && $this.asset.mime.match(/^image\//) ? true : false;
-          // custom
-
           $this.update();
           
           if ($this.asset.mime.match(/^image\//)) {
+
+                // custom
+                // load ImageResize profiles
+                if (!$this.profiles) {
+                    App.request('/imageresize/getProfiles').then(function(data) {
+                        $this.profiles = data;
+                        $this.update();
+                    });
+                }
+                // custom
               
               setTimeout(function() {
                   
