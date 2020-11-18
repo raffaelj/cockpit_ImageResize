@@ -706,13 +706,15 @@
             }
 
             // custom
-            if (this.selected.length == this.assets.length) {
-                this.refs.selectall.checked = true;
-                this.refs.selectall.setAttribute('checked', true);
-            }
-            else {
-                this.refs.selectall.checked = false;
-                this.refs.selectall.removeAttribute('checked');
+            if (this.listmode == 'list') {
+                if (this.selected.length == this.assets.length) {
+                    this.refs.selectall.checked = true;
+                    this.refs.selectall.setAttribute('checked', true);
+                }
+                else {
+                    this.refs.selectall.checked = false;
+                    this.refs.selectall.removeAttribute('checked');
+                }
             }
             // custom
 
