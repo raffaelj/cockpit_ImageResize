@@ -1167,6 +1167,10 @@
     }
     // custom
 
+    // custom - fix js error for non-existent function if called without parent cp-assets component
+    this.getIconCls = this.parent && this.parent.getIconCls ? this.parent.getIconCls : function() {return 'file-text-o';};
+    // custom
+
   </script>
 
 </cp-asset>
