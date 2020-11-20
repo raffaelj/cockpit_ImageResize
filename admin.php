@@ -3,7 +3,10 @@
 $this->on('admin.init', function() {
 
     if ($this->module('imageresize')->getConfig('replaceAssetsManager')) {
-        $this('admin')->addAssets('imageresize:assets/cp-assets.tag');
+        $this('admin')->addAssets([
+            'imageresize:assets/cp-assets.tag',
+            'imageresize:assets/assetspanel-imageresize.tag',
+        ]);
     }
 
     // bind admin routes

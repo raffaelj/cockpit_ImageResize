@@ -892,23 +892,11 @@
                   <div class="uk-margin-large-top uk-text-center" if="{asset}">
                       <span class="uk-h1" if="{asset.mime.match(/^image\//) == null }"><i class="uk-icon-{ getIconCls(asset.path) }"></i></span>
                       <div class="uk-display-inline-block uk-position-relative asset-fp-image" if="{asset.mime.match(/^image\//) }">
-                          <!--<cp-thumbnail src="{ASSETS_URL+asset.path}" width="800"></cp-thumbnail
-                          <div class="cp-assets-fp" title="Focal Point" data-uk-tooltip></div>>-->
-
-                          <!-- custom -->
-                          <cp-thumbnail src="{ASSETS_URL+asset.path}" width="800" if="{ !currentSize || currentSize == 'default' || !asset.sizes[currentSize] }"></cp-thumbnail>
-
-                          <cp-thumbnail if="{ currentSize && currentSize != 'default' && asset.sizes[currentSize] }" src="{ ASSETS_URL+asset.sizes[currentSize].path }" width="{ asset.sizes[currentSize].width }" height="{ asset.sizes[currentSize].height }"></cp-thumbnail>
-                          <div class="cp-assets-fp" title="Focal Point" data-uk-tooltip show="{ !currentSize || currentSize == 'default' || !asset.sizes[currentSize] }"></div>
-                          <!-- custom -->
-
+                          <cp-thumbnail src="{ASSETS_URL+asset.path}" width="800"></cp-thumbnail>
+                          <div class="cp-assets-fp" title="Focal Point" data-uk-tooltip></div>
                       </div>
                       <div class="uk-margin-top uk-text-truncate uk-text-small uk-text-muted">
                           <a href="{ASSETS_URL+asset.path}" target="_blank"  title="{ App.i18n.get('Direct link to asset') }" data-uk-tooltip><i class="uk-icon-button uk-icon-button-outline uk-text-primary uk-icon-link"></i></a>
-
-                          <!-- custom -->
-                          <a if="{ asset.mime.match(/^image\//) && asset.sizes }" each="{ options, name in asset.sizes }" href="{ASSETS_URL+options.path}" target="_blank" title="{ App.i18n.get('Direct link to asset')+' ('+name+')' }" data-uk-tooltip><i class="uk-icon-button uk-text-primary uk-icon-link uk-margin-small-left"></i></a>
-                          <!-- custom -->
                       </div>
                   </div>
               </div>
@@ -919,39 +907,6 @@
               <div class="uk-margin uk-panel-box uk-panel-card">
                   <label class="uk-text-small uk-text-bold">{ App.i18n.get('Copyright') }</label>
                   <input class="uk-width-1-1" type="text" bind="asset.copyright">
-              </div>
-
-              <div if="{ asset.mime.match(/^image\//) }" class="uk-margin uk-panel-box uk-panel-card">
-
-                  <div class="uk-text-small uk-text-bold">ImageResize</div>
-
-                  <div class="">
-
-                      <label class="uk-text-small uk-text-bold">{ App.i18n.get('Select size') }</label>
-                      <select bind="currentSize" class="uk-margin-left">
-                          <option value="default">{ App.i18n.get('default') }</option>
-                          <option value="{name}" each="{ options, name in asset.sizes }">{ name }</option>
-                      </select>
-
-                  </div>
-
-                  <div if="{ profiles }">
-
-                      <label class="uk-text-small uk-text-bold">{ App.i18n.get('Regenerate size') }</label>
-                      <i class="uk-icon-info-circle uk-margin-small-left" title="{ App.i18n.get('Select the default size, set the focal point and click \'Generate\' - You than have to reload the page to see the updated image size because of caching issues.') }" data-uk-tooltip></i>
-                      <ul class="uk-list">
-                          <li each="{ options, size in profiles }">
-                          { size }
-                          <a class="uk-button-small" data-size="{size}" onclick="{ generateSize }">{ App.i18n.get('Generate') }</a>
-                          </li>
-                      </ul>
-
-                  </div>
-
-                  <div class="">
-                      <a class="uk-button" onclick="{ updateFileName }">{ App.i18n.get('Rename file to title') }</a>
-                  </div>
-
               </div>
               <!-- custom -->
 
@@ -1010,12 +965,6 @@
     this.panel  = null;
     this.panels = [];
 
-    // custom
-    // ImageResize addon
-    this.currentSize = 'default';
-    this.profiles = this.parent && this.parent.profiles ? this.parent.profiles : null;
-    // custom
-
     for (var tag in riot.tags) {
 
         if (tag.indexOf('assetspanel-')==0) {
@@ -1036,16 +985,6 @@
           
           if ($this.asset.mime.match(/^image\//)) {
 
-                // custom
-                // load ImageResize profiles
-                if (!$this.profiles) {
-                    App.request('/imageresize/getProfiles').then(function(data) {
-                        $this.profiles = data;
-                        $this.update();
-                    });
-                }
-                // custom
-              
               setTimeout(function() {
                   
                   $this.placeFocalPoint($this.asset.fp);
@@ -1109,63 +1048,6 @@
             visibility: 'visible'
         });
     }
-
-    // custom
-    generateSize(e) {
-
-        if (e) e.preventDefault();
-
-        var size = e.target.dataset.size;
-
-        var data = {
-            asset: this.asset,
-            name: size
-        };
-
-        App.request('/imageresize/addResizedAsset', data).then(function(data) {
-
-            if (typeof $this.asset.sizes == 'undefined') {
-                $this.asset.sizes = {};
-            }
-
-            $this.asset.sizes[size] = data;
-            $this.updateAsset();
-
-        });
-
-    }
-
-    updateFileName(e) {
-
-        if (e) e.preventDefault();
-
-        App.ui.confirm("Are you sure?", function() {
-
-            App.request('/imageresize/updateFileName', {asset: $this.asset}).then(function(data) {
-
-                if (data && data.asset) {
-
-                    App.$.extend($this.asset, data.asset);
-
-                    // update asset in parent list
-                    if ($this.parent && $this.parent.asset) {
-                        App.$.extend($this.parent.asset, data.asset);
-                    }
-
-                    App.ui.notify("Asset updated", "success");
-                    $this.update();
-
-                }
-
-                if (!data || data.error) {
-                    App.ui.notify(data && data.error ? data.error : 'Renaming failed', 'danger');
-                }
-
-            });
-        });
-
-    }
-    // custom
 
     // custom - fix js error for non-existent function if called without parent cp-assets component
     this.getIconCls = this.parent && this.parent.getIconCls ? this.parent.getIconCls : function() {return 'file-text-o';};
