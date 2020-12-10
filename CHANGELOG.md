@@ -1,10 +1,16 @@
 # Changelog
 
-## upcoming
+## 0.2.1
 
-* improved custom assets manager
 * added option to rename files to sluggified titles
+* improved custom assets manager
+  * moved most of the customizations into separate assetspanel
+  * improved progress bar
+  * improved svg handling
+  * improved select-all checkbox
+* fixed  some errors if no image or if SVG
 * minor fixes
+* started to add ability to adjust spatie optimizer options
 
 ## 0.2.0
 
