@@ -74,6 +74,7 @@ $this->module('imageresize')->extend([
                     'optimize'     => false,      # Use Spatie optimizer
                     'replaceAssetsManager' => false,   # modified assets manager
                     'syncFileNamesWithTitle' => false, # set file name to sluggified title (experimental)
+                    'profileNameSeparator'   => null, # use a directory per profile, rather than modifying file name
                 ],
                 $this->app->storage->getKey('cockpit/options', 'imageresize', []),
                 $this->app->retrieve('imageresize', [])
@@ -285,11 +286,16 @@ $this->module('imageresize')->extend([
         $width  = $c['width']  ? $c['width']  : $asset['width'];
         $height = $c['height'] ? $c['height'] : $asset['height'];
 
-        $dir = !empty($c['folder']) ? $c['folder'] : $name;
-        $dir = '/'.\trim($dir, '/').'/';
+        $profile_name = !empty($c['folder']) ? $c['folder'] : $name;
         $file_name = \basename($asset['path']);
 
-        $destination = "{$dir}{$file_name}";
+        if($this->config['profileNameSeparator']) {
+            $parts = pathinfo($file_name);
+            $destination = "{$parts['filename']}{$this->config['profileNameSeparator']}{$profile_name}.{$parts['extension']}";
+        } else {
+            $dir = '/'.\trim($profile_name, '/').'/';
+            $destination = "{$dir}{$file_name}";
+        }
 
         if (!$rebuild && $this->app->filestorage->has("assets://{$destination}")) {
             return false;
