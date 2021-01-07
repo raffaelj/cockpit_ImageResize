@@ -112,6 +112,11 @@ return [
         # overwrite original date pattern - `/2020/10/30/img.jpg` --> `/images/img.jpg`
         'customFolder' => '/images',    # (string|null) default: null
 
+		# String to use to separate the profile name from the file name
+		# Defaults to false, which will generate a directory per profile, eg: /small/img.jpg
+		# If specified, files will exist in single directory, eg /img@small.jpg
+		'profileNameSeparator' => '@', # (string|null) default: null
+
         # Spatie image optimizer (requires additional binaries)
         'optimize'     => true,         # (bool) default: false
 
