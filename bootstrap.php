@@ -285,6 +285,15 @@ $this->module('imageresize')->extend([
         $width  = $c['width']  ? $c['width']  : $asset['width'];
         $height = $c['height'] ? $c['height'] : $asset['height'];
 
+        if ($c['skipIfSmaller']) {
+            if (
+                ($asset['width'] <  $width || $asset['height'] <  $height) &&
+                ($asset['width'] <= $width && $asset['height'] <= $height)
+            ) {
+                return;
+            }
+        }
+
         $dir = !empty($c['folder']) ? $c['folder'] : $name;
         $dir = '/'.\trim($dir, '/').'/';
         $file_name = \basename($asset['path']);

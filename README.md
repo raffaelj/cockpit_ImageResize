@@ -139,6 +139,8 @@ return [
                 'quality' => 70,
                 # set custom folder, that doesn't match profile name --> `/header/img.jpg`
                 'folder'  => 'header'   # (string) if omited, the key name 'headerimage' is used
+				# skip generation if input asset is smaller than the width or height of this profile
+				'skipIfSmaller' => true,
             ],
         ],
     ],
