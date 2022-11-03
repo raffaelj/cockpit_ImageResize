@@ -155,11 +155,11 @@ $this->module('imageresize')->extend([
 
         // create extra images from profiles
         if ($isImage && !$isSVG) {
-            foreach ($c['profiles'] as $name => $options) {
+            foreach ($c['profiles'] as $profileName => $options) {
 
-                if ($resized = $this->createResizedAssetFromProfile($asset, $file, $opts, $name, $options)) {
+                if ($resized = $this->createResizedAssetFromProfile($profileName, $asset, $file, $opts, $options)) {
 
-                    $asset['sizes'][$name] = $resized;
+                    $asset['sizes'][$profileName] = $resized;
                 }
             }
         }
@@ -238,12 +238,12 @@ $this->module('imageresize')->extend([
 
     },
 
-    'createResizedAssetFromProfile' => function($asset, $file = null, $opts = null, $name, $options = null) {
+    'createResizedAssetFromProfile' => function($profileName, $asset, $file = null, $assetOptions = null, $profileOptions = null) {
 
         // skip if not image (or svg)
         if (!$asset['image'] || !(isset($asset['width']) && isset($asset['height']))) return;
 
-        if (!$opts) $opts  = ['mimetype' => $asset['mime']];
+        if (!$assetOptions) $assetOptions  = ['mimetype' => $asset['mime']];
 
         if (!$file) {
 
@@ -265,8 +265,8 @@ $this->module('imageresize')->extend([
             $file = $src;
         }
 
-        if (!$options) {
-            $options = $this->config['profiles'][$name];
+        if (!$profileOptions) {
+            $profileOptions = $this->config['profiles'][$profileName];
         }
 
         $c = \array_replace([
@@ -274,9 +274,9 @@ $this->module('imageresize')->extend([
             'height'  => 0,
             'method'  => 'thumbnail',
             'quality' => 100,
-        ], $options);
+        ], $profileOptions);
 
-        $rebuild = $options['rebuild'] ?? false;
+        $rebuild = $profileOptions['rebuild'] ?? false;
 
         $anchor = $c['fp'] ?? $asset['fp'] ?? 'center';
         if (\is_array($anchor)) $anchor = \implode(' ', $anchor);
@@ -285,7 +285,7 @@ $this->module('imageresize')->extend([
         $width  = $c['width']  ? $c['width']  : $asset['width'];
         $height = $c['height'] ? $c['height'] : $asset['height'];
 
-        $dir = !empty($c['folder']) ? $c['folder'] : $name;
+        $dir = !empty($c['folder']) ? $c['folder'] : $profileName;
         $dir = '/'.\trim($dir, '/').'/';
         $file_name = \basename($asset['path']);
 
@@ -312,7 +312,7 @@ $this->module('imageresize')->extend([
                 ->toString(null, $c['quality']);
 
         // write img to tmp file
-        $tmp = $this->app->path('#tmp:').\uniqid()."_{$name}_{$file_name}";
+        $tmp = $this->app->path('#tmp:').\uniqid()."_{$profileName}_{$file_name}";
         $this->app->helper('fs')->write($tmp, $img);
 
         unset($img);
@@ -323,7 +323,7 @@ $this->module('imageresize')->extend([
 
         // move file
         $stream = \fopen($tmp, 'r+');
-        $this->app->filestorage->writeStream("assets://{$destination}", $stream, $opts);
+        $this->app->filestorage->writeStream("assets://{$destination}", $stream, $assetOptions);
 
         if (\is_resource($stream)) {
             \fclose($stream);
@@ -480,9 +480,9 @@ $this->on('cockpit.asset.upload', function(&$asset, &$_meta, &$opts, &$file, &$p
 
     // create extra images from profiles
     if (!$c['resize'] && \is_array($c['profiles']) && !$isSVG) {
-        foreach ($c['profiles'] as $name => $options) {
-            if ($resized = $this->module('imageresize')->createResizedAssetFromProfile($asset, $file, $opts, $name, $options)) {
-                $asset['sizes'][$name] = $resized;
+        foreach ($c['profiles'] as $profileName => $options) {
+            if ($resized = $this->module('imageresize')->createResizedAssetFromProfile($profileName, $asset, $file, $opts, $options)) {
+                $asset['sizes'][$profileName] = $resized;
             }
         }
     }
