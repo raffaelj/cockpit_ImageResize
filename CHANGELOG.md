@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+* fixed compatibility issue with PHP 8.0 (order of optional/required arguments)
+
 ## 0.2.1
 
 * added option to rename files to sluggified titles
