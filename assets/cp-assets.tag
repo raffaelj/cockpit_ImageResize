@@ -957,6 +957,18 @@
                       <cp-account account="{asset._by}"></cp-account>
                   </div>
               </div>
+              <hr>
+              <div class="uk-margin">
+                    <div class="uk-form-file">
+                        <a class="uk-button">{ App.i18n.get('Replace asset') }</a>
+                        <input class="js-upload-select" aria-label="{ App.i18n.get('Select file') }" type="file">
+                    </div>
+                    <div ref="uploadprogress" class="uk-margin uk-hidden">
+                        <div class="uk-progress">
+                            <div ref="progressbar" class="uk-progress-bar" style="width: 0%;">&nbsp;</div>
+                        </div>
+                    </div>
+              </div>
 
           </div>
       </div>
@@ -1010,6 +1022,50 @@
               }, 500)
           }
 
+        // handle uploads
+        App.assets.require([
+            '/assets/lib/uikit/js/components/upload.js'
+        ], function() {
+
+            var uploadSettings = {
+
+                action: App.route('/assetsmanager/updateAssetFile'),
+                type: 'json',
+                single: true,
+                param: 'file',
+                before: function(options) {
+                    options.params.asset = JSON.stringify($this.asset);
+                },
+                loadstart: function() {
+                    $this.refs.uploadprogress.classList.remove('uk-hidden');
+                },
+                progress: function(percent) {
+
+                    percent = Math.ceil(percent) + '%';
+
+                    $this.refs.progressbar.innerHTML   = '<span>'+percent+'</span>';
+                    $this.refs.progressbar.style.width = percent;
+                },
+                allcomplete: function(asset) {
+
+                    $this.refs.uploadprogress.classList.add('uk-hidden');
+
+                    if (!asset) {
+                        App.ui.notify("File failed to upload.", "danger");
+                    }
+
+                    if (asset) {
+
+                        Object.assign($this.asset, asset);
+                        App.ui.notify("File uploaded.", "success");
+                        $this.update();
+                    }
+                }
+            },
+
+            uploadselect = UIkit.uploadSelect(App.$('.js-upload-select', $this.root)[0], uploadSettings)
+        });
+
       }, function(res) {
           App.ui.notify(res && (res.message || res.error) ? (res.message || res.error) : 'Loading failed.', 'danger');
       });
@@ -1035,6 +1091,7 @@
             App.$.extend($this.asset, asset);
             App.ui.notify("Asset updated", "success");
             $this.update();
+            $this.parent.update();
 
             if (clb) clb(asset);
 
