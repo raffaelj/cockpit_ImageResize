@@ -472,14 +472,22 @@
 
                         if (response && Array.isArray(response.assets) && response.assets.length) {
 
+                            if (!Array.isArray($this.assets)) {
+                                $this.assets = [];
+                            }
+
                             App.ui.notify("File(s) uploaded.", "success");
+
+                            response.assets.forEach(function(asset){
+                                $this.assets.unshift(asset);
+                            });
+
+                            $this.listAssets(1);
                         }
 
                         if (!response) {
                             App.ui.notify("Something went wrong.", "danger");
                         }
-
-                        $this.listAssets(1);
 
                     }
                     // custom
