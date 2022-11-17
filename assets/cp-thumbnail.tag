@@ -47,7 +47,7 @@
 
         this.load = function() {
 
-            var _src = opts.src || opts.riotSrc || opts['riot-src'], img, mode = opts.mode || 'bestFit';
+            var _src = opts.src || opts.riotSrc || opts['riot-src'], img, mode = opts.mode || 'bestFit';
 
             if (!_src || src === _src) {
                 return;
