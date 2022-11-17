@@ -103,6 +103,8 @@
 
         getUrl(url, mode) {
 
+            // TODO: url cache should consider width and height
+
             var key = `${url}:${mode}`;
 
             if (!cache[key]) {
