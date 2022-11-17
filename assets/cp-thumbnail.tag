@@ -68,6 +68,8 @@
                 img.onerror = function() {}
 
                 img.src = url;
+
+                src = _src;
             });
         };
 
