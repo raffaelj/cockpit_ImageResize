@@ -58,13 +58,13 @@
             this.getUrl(_src, mode).then(function(url) {
 
                 img = new Image();
-                img.onload = function() {    
-                    
+                img.onload = function() {
+
                     setTimeout(function() {
                         $this.updateCanvasDim(img)
                     }, 0);
                 }
-                
+
                 img.onerror = function() {}
 
                 img.src = url;
@@ -106,16 +106,16 @@
             if (!cache[key]) {
 
                 cache[key] = new Promise(function(resolve) {
-                    
+
                     if (url.match(/^(http\:|https\:|\/\/)/) && !(url.includes(ASSETS_URL) || url.includes(SITE_URL))) {
                         resolve(url);
                         return;
                     }
-                    
+
                     if (!url.match(/\.(svg|ico)$/i)) {
                         url = App.route(`/cockpit/utils/thumb_url?src=${url}&w=${opts.width}&h=${opts.height}&m=${mode}&re=1`);
                     }
-                    
+
                     resolve(url);
                 });
             }
