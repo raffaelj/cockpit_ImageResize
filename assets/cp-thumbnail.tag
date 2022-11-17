@@ -77,11 +77,11 @@
 
             setTimeout(function() {
 
-                this.width = img.width;
-                this.height = img.height;
+                if (img.width)  this.width = img.width;
+                if (img.height) this.height = img.height;
 
-                this.refs.canvas.width = img.width;
-                this.refs.canvas.height = img.height;
+                if (img.width)  this.refs.canvas.width = img.width;
+                if (img.height) this.refs.canvas.height = img.height;
 
                 App.$(this.refs.canvas).css({
                     backgroundImage: 'url('+img.src+')',
