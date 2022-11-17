@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.3
+
+* merged changes from core `cp-assets`
+  * added webp to typefilters
+  * added opts.single
+  * remember last selected folder and filter
+  * added option to replace asset
+  * performance improvement if upload fails
+* improved `cp-assets`
+  * increased font size in breadcrumbs
+* use modified `cp-thumbnail`
+  * fixed src cache
+  * fixed preview of svg files without dimensions
+
 ## 0.2.2
 
 * fixed compatibility issue with PHP 8.0 (order of optional/required arguments)
