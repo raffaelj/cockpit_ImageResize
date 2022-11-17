@@ -2,6 +2,9 @@
 
     <style>
         .uk-breadcrumb { margin-bottom: 0; }
+        .uk-breadcrumb li a {
+            font-size: 13px;
+        }
         .uk-progress-bar {
             white-space: nowrap;
         }
